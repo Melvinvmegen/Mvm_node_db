@@ -26,9 +26,10 @@ app.use('/', invoiceRoutes)
 Customer.hasMany(Invoice);
 Invoice.belongsTo(Customer, { constraints: true, onDelete: 'CASCADE' })
 Invoice.hasMany(InvoiceItem);
+Invoice.hasMany(InvoiceItem);
 InvoiceItem.belongsTo(Invoice, { constraints: true, onDelete: 'CASCADE' })
 
-sequelize.sync()
+sequelize.sync({force: true})
   .then(result => {
     app.listen(8080);
   })
