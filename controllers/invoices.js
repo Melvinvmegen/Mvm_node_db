@@ -1,8 +1,9 @@
 const { validationResult, Result } = require('express-validator')
 const Invoice = require('../models/invoice')
+const InvoiceItem = require('../models/invoiceItem')
 
 exports.getInvoices = (req, res, next) => {
-  Invoice.findAll()
+  Invoice.findAll({ include: InvoiceItem })
   .then(invoices => res.status(200).json(invoices))
   .catch(err => console.log(err))
 }
@@ -36,13 +37,14 @@ exports.createInvoice = (req, res, next) => {
     total: req.body.total,
     payment_date: req.body.payment_date,
     customerId: req.body.customerId,
-  })
+    invoiceItems: req.body.invoice_items
+  }, { include: Invoice.InvoiceItems })
   .then(invoice => {
-    res.status(201).json({
-      message: 'Invoice created successfully',
-      invoice
+      res.status(201).json({
+        message: 'Invoice created successfully',
+        invoice
+      })
     })
-  })
   .catch(err => console.log(err))
 }
 

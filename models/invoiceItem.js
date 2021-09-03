@@ -2,7 +2,7 @@ const Sequelize = require('sequelize');
 
 const sequelize = require('../util/database');
 
-const InvoiceItem = sequelize.define('invoice_item', {
+const InvoiceItem = sequelize.define('invoiceItem', {
   id: {
     type: Sequelize.INTEGER,
     autoIncrement: true,
