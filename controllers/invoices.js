@@ -55,24 +55,44 @@ exports.updateInvoice = (req, res, next) => {
       .status(422)
       .json({message: 'Vaidation failed', errors: errors.array()})
   }
-  const id = req.params.id
-  Invoice.findByPk(id)
+  Invoice.findByPk(req.params.id, { include: InvoiceItem })
     .then(invoice => {
       invoice.firstname = req.body.firstname,
       invoice.lastname = req.body.lastname,
       invoice.company = req.body.company,
-      invoice.email = req.body.email,
-      invoice.phone = req.body.phone,
       invoice.address = req.body.address,
       invoice.city = req.body.city,
-      invoice.siret = req.body.siret
+      invoice.paid = req.body.paid,
+      invoice.total = req.body.total,
+      invoice.payment_date = req.body.payment_date
       return invoice.save()
     })
   .then(invoice => {
-    res.status(201).json({
-      message: 'Invoice updated successfully',
-      invoice
+		const all_invoice_items = invoice.invoiceItems
+		const mutable_invoice_items = req.body.invoice_items
+		const diff = mutable_invoice_items.filter(function(initial_invoice_item) {
+			return all_invoice_items.some(function(mutable_invoice_item) {
+				return initial_invoice_item.id == mutable_invoice_item.id
+			})
+		})
+    const promises = [];
+    diff.forEach(invoice_item => {
+      InvoiceItem.findByPk(invoice_item.id).then(found_invoice_item => {
+        found_invoice_item.quantity = invoice_item.quantity,
+        found_invoice_item.unit = invoice_item.unit,
+        found_invoice_item.total = invoice_item.total
+        promises.push(found_invoice_item.save())
+      })
     })
+
+    Promise.all(promises)
+    .then(invoice => {
+      res.status(201).json({
+        message: 'Invoice updated successfully',
+        invoice
+      })
+    })
+    .catch(err => console.log(err))
   })
   .catch(err => console.log(err))
 }
