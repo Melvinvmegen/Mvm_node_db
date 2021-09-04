@@ -1,6 +1,9 @@
 const { validationResult, Result } = require('express-validator')
 const Invoice = require('../models/invoice')
 const InvoiceItem = require('../models/invoiceItem')
+const PDFDocument = require('pdfkit')
+const fs = require('fs')
+const path = require('path')
 
 exports.getInvoices = (req, res, next) => {
   Invoice.findAll({ include: InvoiceItem })
@@ -10,12 +13,27 @@ exports.getInvoices = (req, res, next) => {
 
 exports.showInvoice = (req, res, next) => {
   const id = req.params.id
-  Invoice.findByPk(id)
+  Invoice.findByPk(id, { include: InvoiceItem } )
   .then(invoice => {
     if (!invoice) {
       res.status(404).json({ message: 'Invoice not found' })
     }
-    res.status(200).json(invoice)
+    const invoiceName = 'invoice-' + invoice.id + '.pdf'
+    const invoicePath = path.join('data', 'invoices', invoiceName)
+
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `inline; filename="${invoiceName}"`)
+
+    const pdfDoc = new PDFDocument()
+    pdfDoc.pipe(fs.createWriteStream(invoicePath)) 
+    pdfDoc.pipe(res)
+    pdfDoc.fontSize(26).text('Invoice')
+    pdfDoc.text('---------------------------')
+    invoice.invoiceItems.forEach(invoice_item => {
+      pdfDoc.text(`
+        ${invoice_item.name} - ${invoice_item.unit} - ${invoice_item.quantity} = ${invoice_item.total}` )
+    })
+    pdfDoc.end()
   })
   .catch(err => console.log(err))
 }
