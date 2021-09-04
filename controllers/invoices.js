@@ -73,6 +73,7 @@ exports.updateInvoice = (req, res, next) => {
       .status(422)
       .json({message: 'Vaidation failed', errors: errors.array()})
   }
+  let invoice;
   Invoice.findByPk(req.params.id, { include: InvoiceItem })
     .then(invoice => {
       invoice.firstname = req.body.firstname,
@@ -83,6 +84,7 @@ exports.updateInvoice = (req, res, next) => {
       invoice.paid = req.body.paid,
       invoice.total = req.body.total,
       invoice.payment_date = req.body.payment_date
+      invoice = invoice
       return invoice.save()
     })
   .then(invoice => {
@@ -104,7 +106,7 @@ exports.updateInvoice = (req, res, next) => {
     })
 
     Promise.all(promises)
-    .then(invoice => {
+    .then(result => {
       res.status(201).json({
         message: 'Invoice updated successfully',
         invoice
