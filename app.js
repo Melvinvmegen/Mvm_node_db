@@ -10,6 +10,7 @@ const Customer = require('./models/customer');
 const Invoice = require('./models/invoice');
 const Quotation = require('./models/quotation');
 const InvoiceItem = require('./models/invoiceItem');
+const Revenu = require('./models/revenu');
 
 const app = express();
 
@@ -31,14 +32,17 @@ Invoice.belongsTo(Customer, { constraints: true, onDelete: 'CASCADE' })
 Invoice.InvoiceItems = Invoice.hasMany(InvoiceItem);
 InvoiceItem.belongsTo(Invoice, { constraints: true, onDelete: 'CASCADE' })
 
-Customer.hasMany(Quotation);
+Customer.hasMany(Quotation)
 Quotation.belongsTo(Customer, { constraints: true, onDelete: 'CASCADE' })
 Quotation.InvoiceItems = Quotation.hasMany(InvoiceItem);
 InvoiceItem.belongsTo(Quotation, { constraints: true, onDelete: 'CASCADE' })
 
+Revenu.hasMany(Invoice)
+Invoice.belongsTo(Revenu, { constraints: true })
+
 sequelize.sync({force: true})
 .then(result => {
-  return Quotation.create({
+  return Invoice.create({
     firstname: "Martin",
     lastname: "Jean",
     company: "test",
@@ -54,7 +58,7 @@ sequelize.sync({force: true})
         total: 250,
       }
     ]
-  }, { include: Quotation.InvoiceItems })
+  }, { include: Invoice.InvoiceItems })
   .then(result => {
     app.listen(8080)
   })

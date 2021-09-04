@@ -84,6 +84,7 @@ exports.updateInvoice = (req, res, next) => {
       invoice.paid = req.body.paid,
       invoice.total = req.body.total,
       invoice.payment_date = req.body.payment_date
+      invoice.revenuId = req.body.revenuId
       invoice = invoice
       return invoice.save()
     })
