@@ -2,6 +2,7 @@ const { validationResult, Result } = require('express-validator')
 const Revenu = require('../models/revenu')
 const Invoice = require('../models/invoice')
 const Credit = require('../models/credit')
+const Cost = require('../models/cost')
 
 exports.getRevenus = (req, res, next) => {
   Revenu.findAll()
@@ -11,7 +12,7 @@ exports.getRevenus = (req, res, next) => {
 
 exports.showRevenu = (req, res, next) => {
   const id = req.params.id
-  Revenu.findByPk(id, { include: [Invoice, Credit] } )
+  Revenu.findByPk(id, { include: [Invoice, Credit, Cost] } )
   .then(revenu => {
     if (!revenu) {
       res.status(404).json({ message: 'Revenu not found' })
