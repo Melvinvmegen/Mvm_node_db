@@ -12,8 +12,9 @@ const Customer = require('./models/customer');
 const Invoice = require('./models/invoice');
 const Quotation = require('./models/quotation');
 const InvoiceItem = require('./models/invoiceItem');
-const Credit = require('./models/credit');
 const Revenu = require('./models/revenu');
+const Credit = require('./models/credit');
+const Cost = require('./models/cost');
 
 const app = express();
 
@@ -46,6 +47,8 @@ Revenu.hasMany(Invoice)
 Invoice.belongsTo(Revenu, { constraints: true })
 Revenu.hasMany(Credit)
 Credit.belongsTo(Revenu, { constraints: true })
+Revenu.hasMany(Cost)
+Cost.belongsTo(Revenu, { constraints: true })
 
 sequelize.sync({force: true})
 .then(result => {
