@@ -1,5 +1,6 @@
 const { validationResult, Result } = require('express-validator')
 const Quotation = require('../models/quotation')
+const Invoice = require('../models/invoice')
 const InvoiceItem = require('../models/invoiceItem')
 const PDFDocument = require('pdfkit')
 const fs = require('fs')
@@ -114,6 +115,40 @@ exports.updateQuotation = (req, res, next) => {
     })
     .catch(err => console.log(err))
   })
+  .catch(err => console.log(err))
+}
+
+exports.convertToInvoice = (req, res, next) => {
+  const id = req.params.id
+  Quotation.findByPk(id, { include: InvoiceItem })
+  .then(quotation => {
+    if (!quotation) {
+      res.status(404).json({ message: 'Quotation not found' })
+    }
+    const invoice_items = quotation.invoiceItems.map((invoice_item) => {
+      return object = {
+      name: invoice_item.name,
+      quantity: invoice_item.quantity,
+      unit: invoice_item.unit,
+      total: invoice_item.total
+      }
+    })
+
+    return Invoice.create({
+      firstname: quotation.firstname,
+      lastname: quotation.lastname,
+      company: quotation.company,
+      address: quotation.address,
+      city: quotation.city,
+      total: quotation.total,
+      customerId: quotation.customerId,
+      invoiceItems: invoice_items
+    }, { include: Invoice.InvoiceItems })
+  })
+  .then(invoice => res.status(200).json({
+    invoice: invoice,
+    message: 'Quotation successfully converted'
+  }))
   .catch(err => console.log(err))
 }
 

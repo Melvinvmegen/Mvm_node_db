@@ -16,6 +16,9 @@ router.post('/quotation', [
   body('email').trim().isLength({min: 1}).isEmail(),
 ], QuotationController.createQuotation);
 
+// POST /quotation
+router.post('/convert_quotation/:id', QuotationController.convertToInvoice);
+
 // GET /quotation
 router.get('/quotation/:id', QuotationController.showQuotation);
 
