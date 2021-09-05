@@ -11,7 +11,7 @@ exports.getRevenus = (req, res, next) => {
 
 exports.showRevenu = (req, res, next) => {
   const id = req.params.id
-  Revenu.findByPk(id, { include: Invoice, Credit } )
+  Revenu.findByPk(id, { include: [Invoice, Credit] } )
   .then(revenu => {
     if (!revenu) {
       res.status(404).json({ message: 'Revenu not found' })

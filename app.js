@@ -6,11 +6,13 @@ const customerRoutes = require('./routes/customers');
 const invoiceRoutes = require('./routes/invoices');
 const quotationRoutes = require('./routes/quotations');
 const revenuRoutes = require('./routes/revenus');
+const creditRoutes = require('./routes/credits');
 const { Result } = require('express-validator');
 const Customer = require('./models/customer');
 const Invoice = require('./models/invoice');
 const Quotation = require('./models/quotation');
 const InvoiceItem = require('./models/invoiceItem');
+const Credit = require('./models/credit');
 const Revenu = require('./models/revenu');
 
 const app = express();
@@ -28,6 +30,7 @@ app.use('/', customerRoutes);
 app.use('/', invoiceRoutes)
 app.use('/', quotationRoutes)
 app.use('/', revenuRoutes)
+app.use('/', creditRoutes)
 
 Customer.hasMany(Invoice);
 Invoice.belongsTo(Customer, { constraints: true, onDelete: 'CASCADE' })
@@ -41,6 +44,8 @@ InvoiceItem.belongsTo(Quotation, { constraints: true, onDelete: 'CASCADE' })
 
 Revenu.hasMany(Invoice)
 Invoice.belongsTo(Revenu, { constraints: true })
+Revenu.hasMany(Credit)
+Credit.belongsTo(Revenu, { constraints: true })
 
 sequelize.sync({force: true})
 .then(result => {
