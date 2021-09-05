@@ -7,6 +7,7 @@ const invoiceRoutes = require('./routes/invoices');
 const quotationRoutes = require('./routes/quotations');
 const revenuRoutes = require('./routes/revenus');
 const creditRoutes = require('./routes/credits');
+const costRoutes = require('./routes/costs');
 const { Result } = require('express-validator');
 const Customer = require('./models/customer');
 const Invoice = require('./models/invoice');
@@ -32,6 +33,7 @@ app.use('/', invoiceRoutes)
 app.use('/', quotationRoutes)
 app.use('/', revenuRoutes)
 app.use('/', creditRoutes)
+app.use('/', costRoutes)
 
 Customer.hasMany(Invoice);
 Invoice.belongsTo(Customer, { constraints: true, onDelete: 'CASCADE' })
