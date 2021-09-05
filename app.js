@@ -5,6 +5,7 @@ const sequelize = require("./util/database");
 const customerRoutes = require('./routes/customers');
 const invoiceRoutes = require('./routes/invoices');
 const quotationRoutes = require('./routes/quotations');
+const revenuRoutes = require('./routes/revenus');
 const { Result } = require('express-validator');
 const Customer = require('./models/customer');
 const Invoice = require('./models/invoice');
@@ -26,6 +27,7 @@ app.use((req, res, next) => {
 app.use('/', customerRoutes);
 app.use('/', invoiceRoutes)
 app.use('/', quotationRoutes)
+app.use('/', revenuRoutes)
 
 Customer.hasMany(Invoice);
 Invoice.belongsTo(Customer, { constraints: true, onDelete: 'CASCADE' })
@@ -42,10 +44,14 @@ Invoice.belongsTo(Revenu, { constraints: true })
 
 sequelize.sync({force: true})
 .then(result => {
+  return Revenu.create()
+})
+.then(result => {
   return Invoice.create({
     firstname: "Martin",
     lastname: "Jean",
     company: "test",
+    revenuId: 1,
     invoiceItems: [
       {
         quantity: 10,
@@ -59,9 +65,9 @@ sequelize.sync({force: true})
       }
     ]
   }, { include: Invoice.InvoiceItems })
-  .then(result => {
-    app.listen(8080)
-  })
+})
+.then(result => {
+  app.listen(8080)
 })
 .catch(err => {
   console.log(err)
