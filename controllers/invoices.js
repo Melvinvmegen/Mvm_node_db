@@ -55,6 +55,7 @@ exports.createInvoice = (req, res, next) => {
     total: req.body.total,
     payment_date: req.body.payment_date,
     customerId: req.body.customerId,
+    revenuId: req.body.revenuId,
     invoiceItems: req.body.invoice_items
   }, { include: Invoice.InvoiceItems })
   .then(invoice => {
@@ -73,7 +74,6 @@ exports.updateInvoice = (req, res, next) => {
       .status(422)
       .json({message: 'Vaidation failed', errors: errors.array()})
   }
-  let invoice;
   Invoice.findByPk(req.params.id, { include: InvoiceItem })
     .then(invoice => {
       invoice.firstname = req.body.firstname,
@@ -91,22 +91,34 @@ exports.updateInvoice = (req, res, next) => {
   .then(invoice => {
 		const all_invoice_items = invoice.invoiceItems
 		const mutable_invoice_items = req.body.invoice_items
-		const diff = mutable_invoice_items.filter(function(initial_invoice_item) {
-			return all_invoice_items.some(function(mutable_invoice_item) {
+		const diff = mutable_invoice_items.filter(function(mutable_invoice_item) {
+			return !all_invoice_items.some(function(initial_invoice_item) {
+				return initial_invoice_item.id == mutable_invoice_item.id
+			})
+		})
+		const included = mutable_invoice_items.filter(function(mutable_invoice_item) {
+			return all_invoice_items.some(function(initial_invoice_item) {
 				return initial_invoice_item.id == mutable_invoice_item.id
 			})
 		})
     const promises = [];
     diff.forEach(invoice_item => {
+      promises.push(InvoiceItem.create(invoice_item))
+    })
+
+    included.forEach(invoice_item => {
       InvoiceItem.findByPk(invoice_item.id).then(found_invoice_item => {
-        found_invoice_item.quantity = invoice_item.quantity,
-        found_invoice_item.unit = invoice_item.unit,
-        found_invoice_item.total = invoice_item.total
-        promises.push(found_invoice_item.save())
+        if (found_invoice_item) {
+          found_invoice_item.quantity = invoice_item.quantity,
+          found_invoice_item.unit = invoice_item.unit,
+          found_invoice_item.total = invoice_item.total
+          promises.push(found_invoice_item.save())
+        }
       })
     })
 
     Promise.all(promises)
+
     .then(result => {
       res.status(201).json({
         message: 'Invoice updated successfully',
