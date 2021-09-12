@@ -36,6 +36,12 @@ app.use('/', revenuRoutes)
 app.use('/', creditRoutes)
 app.use('/', costRoutes)
 app.use('/users/', authRoutes)
+app.use((error, req, res, next) => {
+  console.log(error)
+  const status = error.statusCode
+  const message = error.message
+  res.status(status).json({message: message})
+})
 
 Customer.hasMany(Invoice);
 Invoice.belongsTo(Customer, { constraints: true, onDelete: 'CASCADE' })

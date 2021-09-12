@@ -7,7 +7,12 @@ const Cost = require('../models/cost')
 exports.getRevenus = (req, res, next) => {
   Revenu.findAll()
   .then(revenus => res.status(200).json(revenus))
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.showRevenu = (req, res, next) => {
@@ -15,7 +20,9 @@ exports.showRevenu = (req, res, next) => {
   Revenu.findByPk(id, { include: [Invoice, Credit, Cost] } )
   .then(revenu => {
     if (!revenu) {
-      res.status(404).json({ message: 'Revenu not found' })
+      const error = new Error('Revenu not found.')
+      error.statusCode = 404
+      throw error
     }
     res.status(200).json(revenu)
   })

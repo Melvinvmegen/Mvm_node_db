@@ -4,7 +4,12 @@ const Customer = require('../models/customer')
 exports.getCustomers = (req, res, next) => {
   Customer.findAll()
   .then(customers => res.status(200).json(customers))
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.showCustomer = (req, res, next) => {
@@ -12,19 +17,26 @@ exports.showCustomer = (req, res, next) => {
   Customer.findByPk(id)
   .then(customer => {
     if (!customer) {
-      res.status(404).json({ message: 'Customer not found' })
+      const error = new Error('Customer not found.')
+      error.statusCode = 404
+      throw error
     }
     res.status(200).json(customer)
   })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.createCustomer = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({message: 'Vaidation failed', errors: errors.array()})
+    const error = new Error('Validation failed.')
+    error.statusCode = 422
+    throw error
   }
   Customer.create({
     firstname: req.body.firstname,
@@ -42,15 +54,20 @@ exports.createCustomer = (req, res, next) => {
       customer
     })
   })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.updateCustomer = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({message: 'Vaidation failed', errors: errors.array()})
+    const error = new Error('Validation failed.')
+    error.statusCode = 422
+    throw error
   }
   const id = req.params.id
   Customer.findByPk(id)
@@ -71,7 +88,12 @@ exports.updateCustomer = (req, res, next) => {
       customer
     })
   })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 
@@ -80,10 +102,17 @@ exports.deleteCustomer = (req, res, next) => {
   Customer.findByPk(id)
   .then(customer => {
     if (!customer) {
-      res.status(404).json({ message: 'Customer not found' })
+      const error = new Error('Customer not found.')
+      error.statusCode = 404
+      throw error
     }
     return customer.destroy()
   })
   .then(result => res.status(200).json({message: 'Customer successfully destroyed'}))
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }

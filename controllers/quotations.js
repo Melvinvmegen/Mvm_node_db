@@ -9,7 +9,12 @@ const path = require('path')
 exports.getQuotations = (req, res, next) => {
   Quotation.findAll({ include: InvoiceItem })
   .then(quotations => res.status(200).json(quotations))
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.showQuotation = (req, res, next) => {
@@ -17,7 +22,9 @@ exports.showQuotation = (req, res, next) => {
   Quotation.findByPk(id, { include: InvoiceItem } )
   .then(quotation => {
     if (!quotation) {
-      res.status(404).json({ message: 'Quotation not found' })
+      const error = new Error('Quotation not found.')
+      error.statusCode = 404
+      throw error
     }
     const quotationName = 'quotation-' + quotation.id + '.pdf'
     const quotationPath = path.join('data', 'quotations', quotationName)
@@ -36,15 +43,20 @@ exports.showQuotation = (req, res, next) => {
     })
     pdfDoc.end()
   })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.createQuotation = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({message: 'Vaidation failed', errors: errors.array()})
+    const error = new Error('Validation failed.')
+    error.statusCode = 422
+    throw error
   }
   Quotation.create({
     firstname: req.body.firstname,
@@ -64,17 +76,21 @@ exports.createQuotation = (req, res, next) => {
         quotation
       })
     })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.updateQuotation = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({message: 'Vaidation failed', errors: errors.array()})
+    const error = new Error('Validation failed.')
+    error.statusCode = 422
+    throw error
   }
-  let quotation;
   Quotation.findByPk(req.params.id, { include: InvoiceItem })
     .then(quotation => {
       quotation.firstname = req.body.firstname,
@@ -125,9 +141,19 @@ exports.updateQuotation = (req, res, next) => {
         quotation
       })
     })
-    .catch(err => console.log(err))
+    .catch(error => {
+      if (error.statusCode) {
+        error.statusCode = 500
+      }
+      next(error)
+    })
   })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.convertToInvoice = (req, res, next) => {
@@ -135,7 +161,9 @@ exports.convertToInvoice = (req, res, next) => {
   Quotation.findByPk(id, { include: InvoiceItem })
   .then(quotation => {
     if (!quotation) {
-      res.status(404).json({ message: 'Quotation not found' })
+      const error = new Error('Quotation not found.')
+      error.statusCode = 404
+      throw error
     }
     const invoice_items = quotation.invoiceItems.map((invoice_item) => {
       return object = {
@@ -161,7 +189,12 @@ exports.convertToInvoice = (req, res, next) => {
     invoice: invoice,
     message: 'Quotation successfully converted'
   }))
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 
@@ -170,10 +203,17 @@ exports.deleteQuotation = (req, res, next) => {
   Quotation.findByPk(id)
   .then(quotation => {
     if (!quotation) {
-      res.status(404).json({ message: 'Quotation not found' })
+      const error = new Error('Quotation not found.')
+      error.statusCode = 404
+      throw error
     }
     return quotation.destroy()
   })
   .then(result => res.status(200).json({message: 'Quotation successfully destroyed'}))
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }

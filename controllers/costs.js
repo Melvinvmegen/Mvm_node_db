@@ -4,9 +4,9 @@ const { validationResult, Result } = require('express-validator')
 exports.createCost = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({message: 'Vaidation failed', errors: errors.array()})
+    const error = new Error('Validation failed.')
+    error.statusCode = 422
+    throw error
   }
   Cost.create({
     name: req.body.name,
@@ -19,15 +19,20 @@ exports.createCost = (req, res, next) => {
         cost
       })
     })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.updateCost = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({message: 'Vaidation failed', errors: errors.array()})
+    const error = new Error('Validation failed.')
+    error.statusCode = 422
+    throw error
   }
   Cost.findByPk(req.params.id)
   .then(cost => {
@@ -42,7 +47,12 @@ exports.updateCost = (req, res, next) => {
       cost
     })
   })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.deleteCost = (req, res, next) => {
@@ -50,10 +60,17 @@ exports.deleteCost = (req, res, next) => {
   Cost.findByPk(id)
   .then(cost => {
     if (!cost) {
-      res.status(404).json({ message: 'Cost not found' })
+      const error = new Error('Cost not found.')
+      error.statusCode = 404
+      throw error
     }
     return cost.destroy()
   })
   .then(result => res.status(200).json({message: 'Cost successfully destroyed'}))
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }

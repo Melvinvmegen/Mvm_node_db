@@ -8,7 +8,12 @@ const path = require('path')
 exports.getInvoices = (req, res, next) => {
   Invoice.findAll({ include: InvoiceItem })
   .then(invoices => res.status(200).json(invoices))
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.showInvoice = (req, res, next) => {
@@ -16,7 +21,9 @@ exports.showInvoice = (req, res, next) => {
   Invoice.findByPk(id, { include: InvoiceItem } )
   .then(invoice => {
     if (!invoice) {
-      res.status(404).json({ message: 'Invoice not found' })
+      const error = new Error('Invoice not found.')
+      error.statusCode = 404
+      throw error
     }
     const invoiceName = 'invoice-' + invoice.id + '.pdf'
     const invoicePath = path.join('data', 'invoices', invoiceName)
@@ -35,15 +42,20 @@ exports.showInvoice = (req, res, next) => {
     })
     pdfDoc.end()
   })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.createInvoice = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({message: 'Vaidation failed', errors: errors.array()})
+    const error = new Error('Validation failed.')
+    error.statusCode = 422
+    throw error
   }
   Invoice.create({
     firstname: req.body.firstname,
@@ -64,15 +76,20 @@ exports.createInvoice = (req, res, next) => {
         invoice
       })
     })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 exports.updateInvoice = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res
-      .status(422)
-      .json({message: 'Vaidation failed', errors: errors.array()})
+    const error = new Error('Validation failed.')
+    error.statusCode = 422
+    throw error
   }
   Invoice.findByPk(req.params.id, { include: InvoiceItem })
     .then(invoice => {
@@ -125,9 +142,19 @@ exports.updateInvoice = (req, res, next) => {
         invoice
       })
     })
-    .catch(err => console.log(err))
+    .catch(error => {
+      if (error.statusCode) {
+        error.statusCode = 500
+      }
+      next(error)
+    })
   })
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
 
 
@@ -136,10 +163,17 @@ exports.deleteInvoice = (req, res, next) => {
   Invoice.findByPk(id)
   .then(invoice => {
     if (!invoice) {
-      res.status(404).json({ message: 'Invoice not found' })
+      const error = new Error('Invoice not found.')
+      error.statusCode = 404
+      throw error
     }
     return invoice.destroy()
   })
   .then(result => res.status(200).json({message: 'Invoice successfully destroyed'}))
-  .catch(err => console.log(err))
+  .catch(error => {
+    if (error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  })
 }
