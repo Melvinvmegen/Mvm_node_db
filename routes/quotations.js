@@ -6,10 +6,10 @@ const QuotationController = require('../controllers/quotations');
 const router = express.Router();
 
 // GET /quotations
-router.get('/quotations', QuotationController.getQuotations);
+router.get('/quotations', isAuth, QuotationController.getQuotations);
 
 // POST /quotation
-router.post('/quotation', [
+router.post('/quotation', isAuth, [
   body('firstname').trim().isLength({min: 1}),
   body('lastname').trim().isLength({min: 1}),
   body('company').trim().isLength({min: 1}),
@@ -17,15 +17,15 @@ router.post('/quotation', [
 ], QuotationController.createQuotation);
 
 // POST /quotation
-router.post('/convert_quotation/:id', QuotationController.convertToInvoice);
+router.post('/convert_quotation/:id', isAuth, QuotationController.convertToInvoice);
 
 // GET /quotation
-router.get('/quotation/:id', QuotationController.showQuotation);
+router.get('/quotation/:id', isAuth, QuotationController.showQuotation);
 
 // PUT /quotation
-router.put('/quotation/:id', QuotationController.updateQuotation);
+router.put('/quotation/:id', isAuth, QuotationController.updateQuotation);
 
 // DELETE /quotation
-router.delete('/quotation/:id', QuotationController.deleteQuotation);
+router.delete('/quotation/:id', isAuth, QuotationController.deleteQuotation);
 
 module.exports = router;

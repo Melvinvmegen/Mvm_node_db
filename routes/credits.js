@@ -6,12 +6,12 @@ const CreditController = require('../controllers/credits');
 const router = express.Router();
 
 // POST /credit
-router.post('/credit', CreditController.createCredit);
+router.post('/credit', isAuth, CreditController.createCredit);
 
 // PUT /credit
-router.put('/credit/:id', CreditController.updateCredit);
+router.put('/credit/:id', isAuth, CreditController.updateCredit);
 
 // DELETE /credit
-router.delete('/credit/:id', CreditController.deleteCredit);
+router.delete('/credit/:id', isAuth, CreditController.deleteCredit);
 
 module.exports = router;
