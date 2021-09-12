@@ -5,7 +5,7 @@ exports.getCustomers = (req, res, next) => {
   Customer.findAll()
   .then(customers => res.status(200).json(customers))
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -24,7 +24,7 @@ exports.showCustomer = (req, res, next) => {
     res.status(200).json(customer)
   })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -55,7 +55,7 @@ exports.createCustomer = (req, res, next) => {
     })
   })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -89,7 +89,7 @@ exports.updateCustomer = (req, res, next) => {
     })
   })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -110,7 +110,7 @@ exports.deleteCustomer = (req, res, next) => {
   })
   .then(result => res.status(200).json({message: 'Customer successfully destroyed'}))
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)

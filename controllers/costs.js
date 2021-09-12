@@ -20,7 +20,7 @@ exports.createCost = (req, res, next) => {
       })
     })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -48,7 +48,7 @@ exports.updateCost = (req, res, next) => {
     })
   })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -68,7 +68,7 @@ exports.deleteCost = (req, res, next) => {
   })
   .then(result => res.status(200).json({message: 'Cost successfully destroyed'}))
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)

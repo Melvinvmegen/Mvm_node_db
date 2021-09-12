@@ -10,7 +10,7 @@ exports.getQuotations = (req, res, next) => {
   Quotation.findAll({ include: InvoiceItem })
   .then(quotations => res.status(200).json(quotations))
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -44,7 +44,7 @@ exports.showQuotation = (req, res, next) => {
     pdfDoc.end()
   })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -77,7 +77,7 @@ exports.createQuotation = (req, res, next) => {
       })
     })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -142,14 +142,14 @@ exports.updateQuotation = (req, res, next) => {
       })
     })
     .catch(error => {
-      if (error.statusCode) {
+      if (!error.statusCode) {
         error.statusCode = 500
       }
       next(error)
     })
   })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -190,7 +190,7 @@ exports.convertToInvoice = (req, res, next) => {
     message: 'Quotation successfully converted'
   }))
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -211,7 +211,7 @@ exports.deleteQuotation = (req, res, next) => {
   })
   .then(result => res.status(200).json({message: 'Quotation successfully destroyed'}))
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)

@@ -8,7 +8,7 @@ exports.getRevenus = (req, res, next) => {
   Revenu.findAll()
   .then(revenus => res.status(200).json(revenus))
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)

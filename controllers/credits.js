@@ -21,7 +21,7 @@ exports.createCredit = (req, res, next) => {
       })
     })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -50,7 +50,7 @@ exports.updateCredit = (req, res, next) => {
     })
   })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -70,7 +70,7 @@ exports.deleteCredit = (req, res, next) => {
   })
   .then(result => res.status(200).json({message: 'Credit successfully destroyed'}))
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
