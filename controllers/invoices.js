@@ -1,15 +1,14 @@
 const { validationResult, Result } = require('express-validator')
 const Invoice = require('../models/invoice')
 const InvoiceItem = require('../models/invoiceItem')
-const PDFDocument = require('pdfkit')
-const fs = require('fs')
 const path = require('path')
+const { pdfGenerator } = require('../util/pdfGenerator')
 
 exports.getInvoices = (req, res, next) => {
   Invoice.findAll({ include: InvoiceItem })
   .then(invoices => res.status(200).json(invoices))
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -30,20 +29,11 @@ exports.showInvoice = (req, res, next) => {
 
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `inline; filename="${invoiceName}"`)
-
-    const pdfDoc = new PDFDocument()
-    pdfDoc.pipe(fs.createWriteStream(invoicePath)) 
-    pdfDoc.pipe(res)
-    pdfDoc.fontSize(26).text('Invoice')
-    pdfDoc.text('---------------------------')
-    invoice.invoiceItems.forEach(invoice_item => {
-      pdfDoc.text(`
-        ${invoice_item.name} - ${invoice_item.unit} - ${invoice_item.quantity} = ${invoice_item.total}` )
-    })
-    pdfDoc.end()
+    let doc = pdfGenerator(invoice, invoicePath)
+    doc.pipe(res)
   })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -77,7 +67,7 @@ exports.createInvoice = (req, res, next) => {
       })
     })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -143,14 +133,14 @@ exports.updateInvoice = (req, res, next) => {
       })
     })
     .catch(error => {
-      if (error.statusCode) {
+      if (!error.statusCode) {
         error.statusCode = 500
       }
       next(error)
     })
   })
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
@@ -171,7 +161,7 @@ exports.deleteInvoice = (req, res, next) => {
   })
   .then(result => res.status(200).json({message: 'Invoice successfully destroyed'}))
   .catch(error => {
-    if (error.statusCode) {
+    if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)

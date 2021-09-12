@@ -2,8 +2,7 @@ const { validationResult, Result } = require('express-validator')
 const Quotation = require('../models/quotation')
 const Invoice = require('../models/invoice')
 const InvoiceItem = require('../models/invoiceItem')
-const PDFDocument = require('pdfkit')
-const fs = require('fs')
+const { pdfGenerator } = require('../util/pdfGenerator')
 const path = require('path')
 
 exports.getQuotations = (req, res, next) => {
@@ -32,16 +31,8 @@ exports.showQuotation = (req, res, next) => {
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `inline; filename="${quotationName}"`)
 
-    const pdfDoc = new PDFDocument()
-    pdfDoc.pipe(fs.createWriteStream(quotationPath)) 
-    pdfDoc.pipe(res)
-    pdfDoc.fontSize(26).text('Quotation')
-    pdfDoc.text('---------------------------')
-    quotation.invoiceItems.forEach(invoice_item => {
-      pdfDoc.text(`
-        ${invoice_item.name} - ${invoice_item.unit} - ${invoice_item.quantity} = ${invoice_item.total}` )
-    })
-    pdfDoc.end()
+    let doc = pdfGenerator(quotation, quotationPath)
+    doc.pipe(res)
   })
   .catch(error => {
     if (!error.statusCode) {
