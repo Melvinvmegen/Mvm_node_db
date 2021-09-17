@@ -127,9 +127,13 @@ exports.updateQuotation = (req, res, next) => {
 
     Promise.all(promises)
     .then(result => {
-      res.status(201).json({
-        message: 'Quotation updated successfully',
-        quotation
+      quotation.reload().then(result => {
+        quotation.save().then(result => {
+          res.status(201).json({
+            message: 'Quotation updated successfully',
+            quotation
+          })
+        })
       })
     })
     .catch(error => {

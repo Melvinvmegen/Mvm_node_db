@@ -125,11 +125,14 @@ exports.updateInvoice = (req, res, next) => {
     })
 
     Promise.all(promises)
-
     .then(result => {
-      res.status(201).json({
-        message: 'Invoice updated successfully',
-        invoice
+      invoice.reload().then(result => {
+        invoice.save().then(result => {
+          res.status(201).json({
+            message: 'Invoice updated successfully',
+            invoice
+          })
+        })
       })
     })
     .catch(error => {
