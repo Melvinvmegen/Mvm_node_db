@@ -1,9 +1,39 @@
 const { validationResult, Result } = require('express-validator')
 const Customer = require('../models/customer')
+const Sequelize = require('sequelize')
 
 exports.getCustomers = (req, res, next) => {
-  Customer.findAll()
-  .then(customers => res.status(200).json(customers))
+  const Op = Sequelize.Op
+  const queryParams = req.query
+
+  const options = {
+    where: []
+  }
+
+  if (queryParams.name) {
+    options.where.push({[Op.or]: [
+      { firstname: {[Op.iLike]: `%${queryParams.name}%`} },
+      { lastname: {[Op.iLike]: `%${queryParams.name}%`} }
+    ]})
+  }
+
+  if (queryParams.email) {
+    options.where.push({email: {[Op.iLike]: `%${queryParams.email}%`}})
+  }
+
+  if (queryParams.city) {
+    options.where.push({city: {[Op.iLike]: `%${queryParams.city}%`}})
+  }
+
+  if (queryParams.phone) {
+    options.where.push({phone: {[Op.iLike]: `%${queryParams.phone}%`}})
+  }
+
+  Customer.findAll(options)
+  .then(customers => {
+    console.log(customers)
+    res.status(200).json(customers)
+  })
   .catch(error => {
     if (!error.statusCode) {
       error.statusCode = 500
