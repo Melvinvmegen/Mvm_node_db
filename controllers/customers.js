@@ -5,10 +5,9 @@ const Sequelize = require('sequelize')
 exports.getCustomers = (req, res, next) => {
   const Op = Sequelize.Op
   const queryParams = req.query
-
-  const options = {
-    where: []
-  }
+  const offset = +queryParams.currentPage > 1 ? (+queryParams.currentPage * +queryParams.perPage) - +queryParams.perPage : 0
+  const limit = queryParams.perPage
+  const options = { limit, offset, where: [] }
 
   if (queryParams.name) {
     options.where.push({[Op.or]: [
@@ -29,9 +28,8 @@ exports.getCustomers = (req, res, next) => {
     options.where.push({phone: {[Op.iLike]: `%${queryParams.phone}%`}})
   }
 
-  Customer.findAll(options)
+  Customer.findAndCountAll(options)
   .then(customers => {
-    console.log(customers)
     res.status(200).json(customers)
   })
   .catch(error => {
