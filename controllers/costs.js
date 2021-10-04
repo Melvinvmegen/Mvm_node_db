@@ -6,7 +6,7 @@ exports.createCost = (req, res, next) => {
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
-    throw error
+    next(error)
   }
   Cost.create({
     name: req.body.name,
@@ -32,7 +32,7 @@ exports.updateCost = (req, res, next) => {
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
-    throw error
+    next(error)
   }
   Cost.findByPk(req.params.id)
   .then(cost => {
@@ -62,7 +62,7 @@ exports.deleteCost = (req, res, next) => {
     if (!cost) {
       const error = new Error('Cost not found.')
       error.statusCode = 404
-      throw error
+      next(error)
     }
     return cost.destroy()
   })

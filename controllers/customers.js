@@ -47,7 +47,7 @@ exports.showCustomer = (req, res, next) => {
     if (!customer) {
       const error = new Error('Customer not found.')
       error.statusCode = 404
-      throw error
+      next(error)
     }
     res.status(200).json(customer)
   })
@@ -64,7 +64,7 @@ exports.createCustomer = (req, res, next) => {
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
-    throw error
+    next(error)
   }
   Customer.create({
     firstname: req.body.firstname,
@@ -95,7 +95,7 @@ exports.updateCustomer = (req, res, next) => {
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
-    throw error
+    next(error)
   }
   const id = req.params.id
   Customer.findByPk(id)
@@ -132,7 +132,7 @@ exports.deleteCustomer = (req, res, next) => {
     if (!customer) {
       const error = new Error('Customer not found.')
       error.statusCode = 404
-      throw error
+      next(error)
     }
     return customer.destroy()
   })

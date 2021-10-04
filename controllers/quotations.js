@@ -23,7 +23,7 @@ exports.showQuotation = (req, res, next) => {
     if (!quotation) {
       const error = new Error('Quotation not found.')
       error.statusCode = 404
-      throw error
+      next(error)
     }
     const quotationName = 'quotation-' + quotation.id + '.pdf'
     const quotationPath = path.join('data', 'quotations', quotationName)
@@ -47,7 +47,7 @@ exports.createQuotation = (req, res, next) => {
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
-    throw error
+    next(error)
   }
   Quotation.create({
     firstname: req.body.firstname,
@@ -80,7 +80,7 @@ exports.updateQuotation = (req, res, next) => {
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
-    throw error
+    next(error)
   }
   Quotation.findByPk(req.params.id, { include: InvoiceItem })
     .then(quotation => {
@@ -158,7 +158,7 @@ exports.convertToInvoice = (req, res, next) => {
     if (!quotation) {
       const error = new Error('Quotation not found.')
       error.statusCode = 404
-      throw error
+      next(error)
     }
     const invoice_items = quotation.invoiceItems.map((invoice_item) => {
       return object = {
@@ -200,7 +200,7 @@ exports.deleteQuotation = (req, res, next) => {
     if (!quotation) {
       const error = new Error('Quotation not found.')
       error.statusCode = 404
-      throw error
+      next(error)
     }
     return quotation.destroy()
   })

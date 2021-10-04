@@ -22,7 +22,7 @@ exports.showRevenu = (req, res, next) => {
     if (!revenu) {
       const error = new Error('Revenu not found.')
       error.statusCode = 404
-      throw error
+      next(error)
     }
     res.status(200).json(revenu)
   })

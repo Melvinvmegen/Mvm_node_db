@@ -6,7 +6,7 @@ exports.createCredit = (req, res, next) => {
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
-    throw error
+    next(error)
   }
   Credit.create({
     reason: req.body.reason,
@@ -33,7 +33,7 @@ exports.updateCredit = (req, res, next) => {
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
-    throw error
+    next(error)
   }
   Credit.findByPk(req.params.id)
   .then(credit => {
@@ -64,7 +64,7 @@ exports.deleteCredit = (req, res, next) => {
     if (!credit) {
       const error = new Error('Credit not found.')
       error.statusCode = 404
-      throw error
+      next(error)
     }
     return credit.destroy()
   })
