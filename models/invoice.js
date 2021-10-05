@@ -25,15 +25,4 @@ const Invoice = sequelize.define('invoice', {
   }
 });
 
-Invoice.addHook('beforeSave', (invoice, options) => {
-  let invoice_total = 0;
-  if (invoice.invoiceItems) {
-    invoice.invoiceItems.forEach(invoice_item => {
-      invoice_total += invoice_item.total
-    }); 
-  }
-
-  invoice.total = invoice_total;
-});
-
 module.exports = Invoice;
