@@ -135,6 +135,7 @@ exports.updateInvoice = async (req, res, next) => {
         return initial_invoice_item.id == mutable_invoice_item.id
       })
     })
+    console.log(included)
     const createInvoiceItemsPromises = [];
     diff.forEach(invoice_item => {
       createInvoiceItemsPromises.push(InvoiceItem.create(invoice_item))
@@ -145,7 +146,9 @@ exports.updateInvoice = async (req, res, next) => {
 
     included.forEach(invoice_item => {
       InvoiceItem.findByPk(invoice_item.id).then(found_invoice_item => {
-        if (found_invoice_item) {
+        if (invoice_item._destroy) {
+          updateInvoiceItemsPromises.push(found_invoice_item.destroy())
+        } else {
           found_invoice_item.quantity = invoice_item.quantity,
           found_invoice_item.unit = invoice_item.unit,
           found_invoice_item.total = invoice_item.total
@@ -158,7 +161,6 @@ exports.updateInvoice = async (req, res, next) => {
     invoice = await invoice.reload()
     invoice = await invoice.save()
     invoice = await Invoice.findByPk(invoice.id, { include: InvoiceItem })
-    console.log(invoice)
     res.status(201).json({ message: 'Invoice updated successfully', invoice })
   } catch (error) {
     if (!error.statusCode) {
