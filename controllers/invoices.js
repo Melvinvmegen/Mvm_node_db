@@ -46,7 +46,7 @@ exports.getInvoices = (req, res, next) => {
 
 exports.showInvoice = async (req, res, next) => {
   const id = req.params.id
-  const isPDF = req.params.pdf
+  const isPDF = req.query.pdf
 
   try {
     const invoice = await Invoice.findByPk(id, { include: InvoiceItem } )
@@ -63,9 +63,9 @@ exports.showInvoice = async (req, res, next) => {
       res.setHeader('Content-Disposition', `inline; filename="${invoiceName}"`)
       let doc = pdfGenerator(invoice, invoicePath)
       doc.pipe(res)
+    } else {
+      res.status(200).json(invoice)
     }
-    res.status(200).json(invoice)
-
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
@@ -135,7 +135,6 @@ exports.updateInvoice = async (req, res, next) => {
         return initial_invoice_item.id == mutable_invoice_item.id
       })
     })
-    console.log(included)
     const createInvoiceItemsPromises = [];
     diff.forEach(invoice_item => {
       createInvoiceItemsPromises.push(InvoiceItem.create(invoice_item))

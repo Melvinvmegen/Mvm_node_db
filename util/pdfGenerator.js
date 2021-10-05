@@ -34,7 +34,6 @@ function generateHeader(doc, invoice) {
 }
 
 function generateTableHeader(doc, invoice) {
-  console.log()
   let today = new Date();
   const date = formatDate(today)
   doc
@@ -66,13 +65,13 @@ function generateInvoiceTable(doc, invoice) {
     i += 1
     const item = invoice_item;
     const position = invoiceTableTop + (i + 1) * 20;
-    generateTableRow(doc, position, item.name, item.unit, item.quantity, formatCurrency(item.total));
+    generateTableRow(doc, position, item.name, item.unit, item.quantity, formatCurrency(item.total * 100));
     generateHr(doc, position + 15);
   }
 
   const subtotalPosition = invoiceTableTop + (i + 1) * 30;
   doc.font("Helvetica-Bold");
-  generateTableRow(doc, subtotalPosition, "", "", "Total", formatCurrency(invoice.total));
+  generateTableRow(doc, subtotalPosition, "", "", "Total", formatCurrency(invoice.total * 100));
   doc.font("Helvetica");
 }
 

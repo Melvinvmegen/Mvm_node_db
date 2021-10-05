@@ -25,7 +25,7 @@ app.use(bodyParser.json())
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
-  res.setHeader('Access-Control-Allow-Methods', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   next();
 })
 
@@ -37,13 +37,12 @@ app.use('/', creditRoutes)
 app.use('/', costRoutes)
 app.use('/users/', authRoutes)
 app.use((error, req, res, next) => {
-  console.log(error)
   const status = error.statusCode
   const message = error.message
   res.status(status).json({message: message})
 })
 
-Customer.hasMany(Invoice);
+Customer.hasMany(Invoice)
 Invoice.belongsTo(Customer, { constraints: true, onDelete: 'CASCADE' })
 Invoice.InvoiceItems = Invoice.hasMany(InvoiceItem);
 InvoiceItem.belongsTo(Invoice, { constraints: true, onDelete: 'CASCADE' })
@@ -62,14 +61,20 @@ Cost.belongsTo(Revenu, { constraints: true })
 
 sequelize.sync({force: true})
 .then(result => {
-  return Revenu.create()
+  Customer.create({
+    firstname: 'Martin',
+    lastname: 'Jean',
+    company: "test",
+    address: "123 rue tete d'or",
+    phone: '0764470724',
+  })
 })
 .then(result => {
   return Invoice.create({
     firstname: "Martin",
     lastname: "Jean",
     company: "test",
-    revenuId: 1,
+    customerId: 1,
     invoiceItems: [
       {
         quantity: 10,
