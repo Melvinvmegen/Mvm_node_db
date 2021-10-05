@@ -6,7 +6,7 @@ const { pdfGenerator } = require('../util/pdfGenerator')
 const Sequelize = require('sequelize')
 const { cpSync } = require('fs')
 
-exports.getInvoices = (req, res, next) => {
+exports.getInvoices = async (req, res, next) => {
   const Op = Sequelize.Op
   const queryParams = req.query
   const offset = +queryParams.currentPage > 1 ? (+queryParams.currentPage * +queryParams.perPage) - +queryParams.perPage : 0
@@ -34,14 +34,15 @@ exports.getInvoices = (req, res, next) => {
     options.where.push({total: {[Op.eq]: +queryParams.total}})
   }
 
-  Invoice.findAndCountAll(options)
-  .then(invoices => res.status(200).json(invoices))
-  .catch(error => {
+  try {
+    const invoices = await Invoice.findAndCountAll(options)
+    res.status(200).json(invoices)
+  } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
-  })
+  }
 }
 
 exports.showInvoice = async (req, res, next) => {
@@ -170,22 +171,21 @@ exports.updateInvoice = async (req, res, next) => {
 }
 
 
-exports.deleteInvoice = (req, res, next) => {
+exports.deleteInvoice = async (req, res, next) => {
   const id = req.params.id
-  Invoice.findByPk(id)
-  .then(invoice => {
+  try {
+    const invoice = await Invoice.findByPk(id)
     if (!invoice) {
       const error = new Error('Invoice not found.')
       error.statusCode = 404
       next(error)
+      await invoice.destroy()
+      res.status(200).json({message: 'Invoice successfully destroyed'})
     }
-    return invoice.destroy()
-  })
-  .then(result => res.status(200).json({message: 'Invoice successfully destroyed'}))
-  .catch(error => {
+  } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
-  })
+  }
 }

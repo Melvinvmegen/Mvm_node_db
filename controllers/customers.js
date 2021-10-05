@@ -28,69 +28,64 @@ exports.getCustomers = (req, res, next) => {
     options.where.push({phone: {[Op.iLike]: `%${queryParams.phone}%`}})
   }
 
-  Customer.findAndCountAll(options)
-  .then(customers => {
+  try {
+    const customers = Customer.findAndCountAll(options)
     res.status(200).json(customers)
-  })
-  .catch(error => {
+
+  } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
-  })
+  }
 }
 
-exports.showCustomer = (req, res, next) => {
+exports.showCustomer = async (req, res, next) => {
   const id = req.params.id
-  Customer.findByPk(id)
-  .then(customer => {
+  try {
+    const customer = await Customer.findByPk(id)
     if (!customer) {
       const error = new Error('Customer not found.')
       error.statusCode = 404
       next(error)
     }
     res.status(200).json(customer)
-  })
-  .catch(error => {
+  } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
-  })
+  }
 }
 
-exports.createCustomer = (req, res, next) => {
+exports.createCustomer = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
     next(error)
   }
-  Customer.create({
-    firstname: req.body.firstname,
-    lastname: req.body.lastname,
-    company: req.body.company,
-    email: req.body.email,
-    phone: req.body.phone,
-    address: req.body.address,
-    city: req.body.city,
-    siret: req.body.siret
-  })
-  .then(customer => {
-    res.status(201).json({
-      message: 'Customer created successfully',
-      customer
+  try {
+    const customer = await Customer.create({
+      firstname: req.body.firstname,
+      lastname: req.body.lastname,
+      company: req.body.company,
+      email: req.body.email,
+      phone: req.body.phone,
+      address: req.body.address,
+      city: req.body.city,
+      siret: req.body.siret
     })
-  })
-  .catch(error => {
+    res.status(201).json({ message: 'Customer created successfully', customer })
+  } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
-  })
+  }
 }
 
-exports.updateCustomer = (req, res, next) => {
+exports.updateCustomer = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
@@ -98,49 +93,42 @@ exports.updateCustomer = (req, res, next) => {
     next(error)
   }
   const id = req.params.id
-  Customer.findByPk(id)
-    .then(customer => {
-      customer.firstname = req.body.firstname,
-      customer.lastname = req.body.lastname,
-      customer.company = req.body.company,
-      customer.email = req.body.email,
-      customer.phone = req.body.phone,
-      customer.address = req.body.address,
-      customer.city = req.body.city,
-      customer.siret = req.body.siret
-      return customer.save()
-    })
-  .then(customer => {
-    res.status(201).json({
-      message: 'Customer updated successfully',
-      customer
-    })
-  })
-  .catch(error => {
+  try {
+    let customer = await Customer.findByPk(id)
+    customer.firstname = req.body.firstname,
+    customer.lastname = req.body.lastname,
+    customer.company = req.body.company,
+    customer.email = req.body.email,
+    customer.phone = req.body.phone,
+    customer.address = req.body.address,
+    customer.city = req.body.city,
+    customer.siret = req.body.siret
+    customer = await customer.save()
+    res.status(201).json({ message: 'Customer updated successfully', customer })
+  } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
-  })
+  }
 }
 
 
-exports.deleteCustomer = (req, res, next) => {
+exports.deleteCustomer = async (req, res, next) => {
   const id = req.params.id
-  Customer.findByPk(id)
-  .then(customer => {
+  try {
+    const customer = await Customer.findByPk(id)
     if (!customer) {
       const error = new Error('Customer not found.')
       error.statusCode = 404
       next(error)
     }
-    return customer.destroy()
-  })
-  .then(result => res.status(200).json({message: 'Customer successfully destroyed'}))
-  .catch(error => {
+    await customer.destroy()
+    res.status(200).json({message: 'Customer successfully destroyed'})
+  } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
-  })
+  }
 }
