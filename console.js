@@ -5,6 +5,8 @@ const sequelize = require("./util/database");
 const User = require('./models/user');
 const Customer = require('./models/customer');
 const Invoice = require('./models/invoice');
+const Quotation = require('./models/quotation');
+const InvoiceItem = require('./models/invoiceItem');
 
 sequelize.sync()
   .then(() => {
@@ -13,5 +15,7 @@ sequelize.sync()
     })
     replServer.context.User = User
     replServer.context.Customer = Customer
+    replServer.context.Quotation = Quotation
     replServer.context.Invoice = Invoice
+    replServer.context.InvoiceItem = InvoiceItem
   })
