@@ -20,15 +20,4 @@ const Quotation = sequelize.define('quotation', {
   }
 });
 
-Quotation.addHook('beforeSave', (quotation, options) => {
-  let quotation_total = 0;
-  if (quotation.invoiceItems) {
-    quotation.invoiceItems.forEach(invoice_item => {
-      quotation_total += invoice_item.total
-    }); 
-  }
-
-  quotation.total = quotation_total;
-});
-
 module.exports = Quotation;
