@@ -2,7 +2,7 @@ const { validationResult, Result } = require('express-validator')
 const Customer = require('../models/customer')
 const Sequelize = require('sequelize')
 
-exports.getCustomers = (req, res, next) => {
+exports.getCustomers = async (req, res, next) => {
   const Op = Sequelize.Op
   const queryParams = req.query
   const offset = +queryParams.currentPage > 1 ? (+queryParams.currentPage * +queryParams.perPage) - +queryParams.perPage : 0
@@ -29,7 +29,7 @@ exports.getCustomers = (req, res, next) => {
   }
 
   try {
-    const customers = Customer.findAndCountAll(options)
+    const customers = await Customer.findAndCountAll(options)
     res.status(200).json(customers)
 
   } catch (error) {

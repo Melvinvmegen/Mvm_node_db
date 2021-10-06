@@ -4,7 +4,6 @@ const InvoiceItem = require('../models/invoiceItem')
 const path = require('path')
 const { pdfGenerator } = require('../util/pdfGenerator')
 const Sequelize = require('sequelize')
-const { cpSync } = require('fs')
 
 exports.getInvoices = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -80,7 +79,7 @@ exports.createInvoice = async (req, res, next) => {
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
-    next(error)
+    return next(error)
   }
   try {
     const invoice = await Invoice.create({
@@ -110,7 +109,7 @@ exports.updateInvoice = async (req, res, next) => {
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
     error.statusCode = 422
-    next(error)
+    return next(error)
   }
   try {
     let invoice = await Invoice.findByPk(req.params.id, { include: InvoiceItem })

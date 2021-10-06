@@ -90,6 +90,26 @@ sequelize.sync({force: true})
   }, { include: Invoice.InvoiceItems })
 })
 .then(result => {
+  return Quotation.create({
+    firstname: "Martin",
+    lastname: "Jean",
+    company: "test",
+    customerId: 1,
+    invoiceItems: [
+      {
+        quantity: 10,
+        unit: 25,
+        total: 250,
+      },
+      {
+        quantity: 10,
+        unit: 30,
+        total: 250,
+      }
+    ]
+  }, { include: Quotation.InvoiceItems })
+})
+.then(result => {
   app.listen(8080)
 })
 .catch(err => {
