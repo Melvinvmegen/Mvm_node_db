@@ -10,4 +10,7 @@ router.get('/revenus', isAuth, RevenuController.getRevenus);
 // GET /revenu
 router.get('/revenu/:id', isAuth, RevenuController.showRevenu);
 
+// PUT /revenu
+router.put('/revenu/:id', isAuth, RevenuController.updateRevenu);
+
 module.exports = router;
