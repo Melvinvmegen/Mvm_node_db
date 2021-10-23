@@ -52,7 +52,7 @@ exports.updateRevenu = async (req, res, next) => {
     return next(error)
   }
   try {
-    let revenu = await Revenu.findByPk(req.params.id, { include: [Credit, Cost] })
+    let revenu = await Revenu.findByPk(req.params.id, { include: [Credit, Cost, Invoice] })
     const all_credits = revenu.credits
     const mutable_credits = req.body.credits
     const diff_credits = mutable_credits.filter(function(mutable_credit) {
@@ -119,7 +119,7 @@ exports.updateRevenu = async (req, res, next) => {
     await Promise.all(updateCreditsPromises)
     revenu = await revenu.reload()
     revenu = await revenu.save()
-    revenu = await Revenu.findByPk(revenu.id, { include: [Credit, Cost] })
+    revenu = await Revenu.findByPk(revenu.id, { include: [Credit, Cost, Invoice] })
     res.status(201).json({ message: 'Revenu updated successfully', revenu })
   } catch (error) {
     if (!error.statusCode) {
