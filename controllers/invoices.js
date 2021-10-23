@@ -178,9 +178,9 @@ exports.deleteInvoice = async (req, res, next) => {
       const error = new Error('Invoice not found.')
       error.statusCode = 404
       next(error)
-      await invoice.destroy()
-      res.status(200).json({message: 'Invoice successfully destroyed'})
     }
+    await invoice.destroy()
+    res.status(200).json({message: 'Invoice successfully destroyed'})
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
