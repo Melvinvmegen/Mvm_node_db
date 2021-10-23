@@ -1,13 +1,19 @@
 const { validationResult, Result } = require('express-validator')
 const Customer = require('../models/customer')
 const Sequelize = require('sequelize')
+const Invoice = require('../models/invoice')
 
 exports.getCustomers = async (req, res, next) => {
   const Op = Sequelize.Op
   const queryParams = req.query
   const offset = +queryParams.currentPage > 1 ? (+queryParams.currentPage * +queryParams.perPage) - +queryParams.perPage : 0
   const limit = queryParams.perPage
-  const options = { limit, offset, where: [] }
+  const options = { 
+    limit, 
+    offset, 
+    where: [],
+    include: Invoice
+  }
 
   if (queryParams.name) {
     options.where.push({[Op.or]: [

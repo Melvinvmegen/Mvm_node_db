@@ -70,11 +70,15 @@ sequelize.sync({force: true})
   })
 })
 .then(result => {
+  return Revenu.create({ include: Revenu.Invoice })
+})
+.then(result => {
   return Invoice.create({
     firstname: "Martin",
     lastname: "Jean",
     company: "test",
     customerId: 1,
+    revenuId: 1,
     invoiceItems: [
       {
         quantity: 10,
@@ -88,26 +92,6 @@ sequelize.sync({force: true})
       }
     ]
   }, { include: Invoice.InvoiceItems })
-})
-.then(result => {
-  return Quotation.create({
-    firstname: "Martin",
-    lastname: "Jean",
-    company: "test",
-    customerId: 1,
-    invoiceItems: [
-      {
-        quantity: 10,
-        unit: 25,
-        total: 250,
-      },
-      {
-        quantity: 10,
-        unit: 30,
-        total: 250,
-      }
-    ]
-  }, { include: Quotation.InvoiceItems })
 })
 .then(result => {
   app.listen(8080)
