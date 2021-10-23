@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const sequelize = require("./util/database");
+const cron = require('node-cron');
 
 const customerRoutes = require('./routes/customers');
 const invoiceRoutes = require('./routes/invoices');
@@ -58,6 +59,11 @@ Revenu.hasMany(Credit)
 Credit.belongsTo(Revenu, { constraints: true })
 Revenu.hasMany(Cost)
 Cost.belongsTo(Revenu, { constraints: true })
+
+cron.schedule('* * * * *', function() {
+  console.log('jsuis la')
+  Revenu.create()
+});
 
 sequelize.sync({force: true})
 .then(result => {
