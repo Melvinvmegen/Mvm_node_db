@@ -1,22 +1,25 @@
-const Sequelize = require('sequelize');
+'use strict';
+const { Model } = require('sequelize');
 
-const sequelize = require('../util/database');
-
-const Customer = sequelize.define('customer', {
-  id: {
-    type: Sequelize.INTEGER,
-    autoIncrement: true,
-    allowNull: false,
-    primaryKey: true
-  },
-  firstname: Sequelize.STRING,
-  lastname: Sequelize.STRING,
-  company: Sequelize.STRING,
-  email: Sequelize.STRING,
-  phone: Sequelize.STRING,
-  address: Sequelize.STRING,
-  city: Sequelize.STRING,
-  siret: Sequelize.STRING
-});
-
-module.exports = Customer;
+module.exports = (sequelize, DataTypes) => {
+  class Customer extends Model {
+    static associate(models) {
+      this.hasMany(models.Invoice);
+      this.hasMany(models.Quotation);
+    }
+  };
+  Customer.init({
+    firstName: DataTypes.STRING,
+    lastName: DataTypes.STRING,
+    company: DataTypes.STRING,
+    email: DataTypes.STRING,
+    phone: DataTypes.STRING,
+    address: DataTypes.STRING,
+    city: DataTypes.STRING,
+    siret: DataTypes.STRING
+  }, {
+    sequelize,
+    modelName: 'Customer',
+  });
+  return Customer;
+};

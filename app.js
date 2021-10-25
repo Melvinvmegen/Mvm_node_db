@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const sequelize = require("./util/database");
+const db = require("./models/index");
 const cron = require('node-cron');
 
 const customerRoutes = require('./routes/customers');
@@ -10,14 +10,9 @@ const revenuRoutes = require('./routes/revenus');
 const creditRoutes = require('./routes/credits');
 const costRoutes = require('./routes/costs');
 const authRoutes = require('./routes/auth');
-const { Result } = require('express-validator');
-const Customer = require('./models/customer');
-const Invoice = require('./models/invoice');
-const Quotation = require('./models/quotation');
-const InvoiceItem = require('./models/invoiceItem');
-const Revenu = require('./models/revenu');
-const Credit = require('./models/credit');
-const Cost = require('./models/cost');
+const Customer = db.Customer;
+const Invoice = db.Invoice;
+const Revenu = db.Revenu;
 
 const app = express();
 
@@ -43,33 +38,15 @@ app.use((error, req, res, next) => {
   res.status(status).json({message: message})
 })
 
-Customer.hasMany(Invoice)
-Invoice.belongsTo(Customer, { constraints: true, onDelete: 'CASCADE' })
-Invoice.InvoiceItems = Invoice.hasMany(InvoiceItem);
-InvoiceItem.belongsTo(Invoice, { constraints: true, onDelete: 'CASCADE' })
-
-Customer.hasMany(Quotation)
-Quotation.belongsTo(Customer, { constraints: true, onDelete: 'CASCADE' })
-Quotation.InvoiceItems = Quotation.hasMany(InvoiceItem);
-InvoiceItem.belongsTo(Quotation, { constraints: true, onDelete: 'CASCADE' })
-
-Revenu.hasMany(Invoice)
-Invoice.belongsTo(Revenu, { constraints: true })
-Revenu.hasMany(Credit)
-Credit.belongsTo(Revenu, { constraints: true })
-Revenu.hasMany(Cost)
-Cost.belongsTo(Revenu, { constraints: true })
-
-cron.schedule('* * * * *', function() {
-  console.log('jsuis la')
+cron.schedule('0 0 1 * *', function() {
   Revenu.create()
 });
 
-sequelize.sync({force: true})
+db.sequelize.sync({force: true})
 .then(result => {
   Customer.create({
-    firstname: 'Martin',
-    lastname: 'Jean',
+    firstName: 'Martin',
+    lastName: 'Jean',
     company: "test",
     address: "123 rue tete d'or",
     phone: '0764470724',
@@ -80,8 +57,8 @@ sequelize.sync({force: true})
 })
 .then(result => {
   return Invoice.create({
-    firstname: "Martin",
-    lastname: "Jean",
+    firstName: "Martin",
+    lastName: "Jean",
     company: "test",
     customerId: 1,
     revenuId: 1,

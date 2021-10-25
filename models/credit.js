@@ -1,20 +1,19 @@
-const Sequelize = require('sequelize');
+'use strict';
+const { Model } = require('sequelize');
 
-const sequelize = require('../util/database');
-
-const Credit = sequelize.define('credit', {
-  id: {
-    type: Sequelize.INTEGER,
-    autoIncrement: true,
-    allowNull: false,
-    primaryKey: true
-  },
-  reason: Sequelize.STRING,
-  creditor: Sequelize.STRING,
-  total: {
-    type: Sequelize.FLOAT,
-    defaultValue: 0
-  },
-});
-
-module.exports = Credit;
+module.exports = (sequelize, DataTypes) => {
+  class Credit extends Model {
+    static associate(models) {
+      this.belongsTo(models.Revenu);
+    }
+  };
+  Credit.init({
+    creditor: DataTypes.STRING,
+    reason: DataTypes.STRING,
+    total: DataTypes.FLOAT
+  }, {
+    sequelize,
+    modelName: 'Credit',
+  });
+  return Credit;
+};
