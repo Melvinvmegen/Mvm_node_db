@@ -1,7 +1,8 @@
 const { validationResult, Result } = require('express-validator')
-const Customer = require('../models/customer')
-const Sequelize = require('sequelize')
-const Invoice = require('../models/invoice')
+const Sequelize = require('sequelize');
+const db = require("../models/index");
+const Customer = db.Customer;
+const Invoice = db.Invoice
 
 exports.getCustomers = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -17,8 +18,8 @@ exports.getCustomers = async (req, res, next) => {
 
   if (queryParams.name) {
     options.where.push({[Op.or]: [
-      { firstname: {[Op.iLike]: `%${queryParams.name}%`} },
-      { lastname: {[Op.iLike]: `%${queryParams.name}%`} }
+      { firstName: {[Op.iLike]: `%${queryParams.name}%`} },
+      { lastName: {[Op.iLike]: `%${queryParams.name}%`} }
     ]})
   }
 
@@ -73,8 +74,8 @@ exports.createCustomer = async (req, res, next) => {
   }
   try {
     const customer = await Customer.create({
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
       company: req.body.company,
       email: req.body.email,
       phone: req.body.phone,
@@ -101,8 +102,8 @@ exports.updateCustomer = async (req, res, next) => {
   const id = req.params.id
   try {
     let customer = await Customer.findByPk(id)
-    customer.firstname = req.body.firstname,
-    customer.lastname = req.body.lastname,
+    customer.firstName = req.body.firstName,
+    customer.lastName = req.body.lastName,
     customer.company = req.body.company,
     customer.email = req.body.email,
     customer.phone = req.body.phone,

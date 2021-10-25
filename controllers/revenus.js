@@ -1,9 +1,10 @@
 const { validationResult, Result } = require('express-validator')
-const Revenu = require('../models/revenu')
-const Invoice = require('../models/invoice')
-const Credit = require('../models/credit')
-const Cost = require('../models/cost')
-const Sequelize = require('sequelize')
+const Sequelize = require('sequelize');
+const db = require("../models/index");
+const Revenu = db.Revenu
+const Invoice = db.Invoice
+const Credit = db.Credit;
+const Cost = db.Cost;
 
 exports.getRevenus = async (req, res, next) => {
   const Op = Sequelize.Op

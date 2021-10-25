@@ -1,9 +1,10 @@
 const { validationResult } = require('express-validator')
-const Invoice = require('../models/invoice')
-const InvoiceItem = require('../models/invoiceItem')
-const path = require('path')
 const { pdfGenerator } = require('../util/pdfGenerator')
-const Sequelize = require('sequelize')
+const path = require('path')
+const Sequelize = require('sequelize');
+const db = require("../models/index");
+const Invoice = db.Invoice
+const InvoiceItem = db.InvoiceItem;
 
 exports.getInvoices = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -20,8 +21,8 @@ exports.getInvoices = async (req, res, next) => {
 
   if (queryParams.name) {
     options.where.push({[Op.or]: [
-      { firstname: {[Op.iLike]: `%${queryParams.name}%`} },
-      { lastname: {[Op.iLike]: `%${queryParams.name}%`} }
+      { firstName: {[Op.iLike]: `%${queryParams.name}%`} },
+      { lastName: {[Op.iLike]: `%${queryParams.name}%`} }
     ]})
   }
 
@@ -83,8 +84,8 @@ exports.createInvoice = async (req, res, next) => {
   }
   try {
     const invoice = await Invoice.create({
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
       company: req.body.company,
       address: req.body.address,
       city: req.body.city,
@@ -93,8 +94,8 @@ exports.createInvoice = async (req, res, next) => {
       payment_date: req.body.payment_date,
       customerId: req.body.customerId,
       revenuId: req.body.revenuId,
-      invoiceItems: req.body.invoice_items
-    }, { include: Invoice.InvoiceItems })
+      InvoiceItems: req.body.invoice_items
+    }, { include: [ InvoiceItem ] })
     res.status(201).json({ message: 'Invoice created successfully', invoice})
   } catch (error) {
     if (!error.statusCode) {
@@ -113,8 +114,8 @@ exports.updateInvoice = async (req, res, next) => {
   }
   try {
     let invoice = await Invoice.findByPk(req.params.id, { include: InvoiceItem })
-    invoice.firstname = req.body.firstname,
-    invoice.lastname = req.body.lastname,
+    invoice.firstName = req.body.firstName,
+    invoice.lastName = req.body.lastName,
     invoice.company = req.body.company,
     invoice.address = req.body.address,
     invoice.city = req.body.city,
@@ -123,7 +124,7 @@ exports.updateInvoice = async (req, res, next) => {
     invoice.payment_date = req.body.payment_date
     invoice.revenuId = req.body.revenuId
     invoice = await invoice.save()
-    const all_invoice_items = invoice.invoiceItems
+    const all_invoice_items = invoice.InvoiceItems
     const mutable_invoice_items = req.body.invoice_items
     const diff = mutable_invoice_items.filter(function(mutable_invoice_item) {
       return !all_invoice_items.some(function(initial_invoice_item) {
