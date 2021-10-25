@@ -1,13 +1,14 @@
 const repl = require("repl")
+const db = require("./models/index");
 
 // database 
-const sequelize = require("./util/database");
-const User = require('./models/user');
-const Customer = require('./models/customer');
-const Invoice = require('./models/invoice');
-const Quotation = require('./models/quotation');
-const InvoiceItem = require('./models/invoiceItem');
-const Revenu = require('./models/revenu');
+const sequelize = db.sequelize
+const User = db.User;
+const Customer = db.Customer;
+const Invoice = db.Invoice;
+const Quotation = db.Quotation;
+const InvoiceItem = db.InvoiceItem;
+const Revenu = db.Revenu;
 
 sequelize.sync()
   .then(() => {
