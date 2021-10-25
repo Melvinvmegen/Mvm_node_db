@@ -28,7 +28,7 @@ function generateHeader(doc, invoice) {
     .text(invoice.company, 50, 150, { align: "right" })
     .font("Helvetica")
     .text("A l'attention de M. ou Mme", 50, 170, { align: "right" })
-    .text(`${invoice.firstname} ${invoice.lastname}`, 50, 190, { align: "right" })
+    .text(`${invoice.firstName} ${invoice.lastName}`, 50, 190, { align: "right" })
     .text(`${invoice.address} ${invoice.city}`, 50, 210, { align: "right" })
     .moveDown();
 }
@@ -61,7 +61,7 @@ function generateInvoiceTable(doc, invoice) {
   );
   generateHr(doc, invoiceTableTop + 30);
   doc.font("Helvetica");
-  for (const invoice_item of invoice.invoiceItems) {
+  for (const invoice_item of invoice.InvoiceItems) {
     i += 1
     const item = invoice_item;
     const position = invoiceTableTop + (i + 1) * 20;
