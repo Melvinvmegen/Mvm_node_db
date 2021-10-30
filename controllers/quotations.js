@@ -27,8 +27,8 @@ exports.getQuotations = async (req, res, next) => {
     ]})
   }
 
-  if (queryParams.customerId) {
-    options.where.push({customerId: {[Op.eq]: +queryParams.customerId}})
+  if (queryParams.CustomerId) {
+    options.where.push({CustomerId: {[Op.eq]: +queryParams.CustomerId}})
   }
 
   if (queryParams.total) {

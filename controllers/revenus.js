@@ -1,10 +1,7 @@
 const { validationResult, Result } = require('express-validator')
 const Sequelize = require('sequelize');
 const db = require("../models/index");
-const Revenu = db.Revenu
-const Invoice = db.Invoice
-const Credit = db.Credit;
-const Cost = db.Cost;
+const { Revenu, Invoice, Credit, Cost } = db
 
 exports.getRevenus = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -16,7 +13,10 @@ exports.getRevenus = async (req, res, next) => {
     offset, 
     where: [],
     distinct: true,
-    include: [Invoice, Credit, Cost]
+    include: [Invoice, Credit, Cost],
+    order: [
+      ['createdAt', 'DESC'],
+    ]
   }
 
   if (queryParams.month) {
@@ -54,7 +54,7 @@ exports.updateRevenu = async (req, res, next) => {
   }
   try {
     let revenu = await Revenu.findByPk(req.params.id, { include: [Credit, Cost, Invoice] })
-    const all_credits = revenu.credits
+    const all_credits = revenu.Credits
     const mutable_credits = req.body.credits
     const diff_credits = mutable_credits.filter(function(mutable_credit) {
       return !all_credits.some(function(initial_credit) {
@@ -85,7 +85,7 @@ exports.updateRevenu = async (req, res, next) => {
         }
       })
     })
-    const all_costs = revenu.costs
+    const all_costs = revenu.Costs
     const mutable_costs = req.body.costs
     const diff_costs = mutable_costs.filter(function(mutable_cost) {
       return !all_costs.some(function(initial_cost) {
