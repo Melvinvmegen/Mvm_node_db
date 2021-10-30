@@ -1,10 +1,9 @@
-const { validationResult, Result } = require('express-validator')
-const Quotation = require('../models/quotation')
-const Invoice = require('../models/invoice')
-const InvoiceItem = require('../models/invoiceItem')
+const { validationResult } = require('express-validator')
 const { pdfGenerator } = require('../util/pdfGenerator')
-const Sequelize = require('sequelize')
 const path = require('path')
+const Sequelize = require('sequelize');
+const db = require("../models/index");
+const { Quotation, Invoice, InvoiceItem } = db
 
 exports.getQuotations = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -21,13 +20,13 @@ exports.getQuotations = async (req, res, next) => {
 
   if (queryParams.name) {
     options.where.push({[Op.or]: [
-      { firstname: {[Op.iLike]: `%${queryParams.name}%`} },
-      { lastname: {[Op.iLike]: `%${queryParams.name}%`} }
+      { firstName: {[Op.iLike]: `%${queryParams.name}%`} },
+      { lastName: {[Op.iLike]: `%${queryParams.name}%`} }
     ]})
   }
 
-  if (queryParams.customerId) {
-    options.where.push({customerId: {[Op.eq]: +queryParams.customerId}})
+  if (queryParams.CustomerId) {
+    options.where.push({CustomerId: {[Op.eq]: +queryParams.CustomerId}})
   }
 
   if (queryParams.total) {
@@ -78,21 +77,20 @@ exports.createQuotation = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed.')
-    console.log(error)
     error.statusCode = 422
     return next(error)
   }
   try {
     const quotation =  await Quotation.create({
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
       company: req.body.company,
       address: req.body.address,
       city: req.body.city,
       total: req.body.total,
       customerId: req.body.customerId,
-      invoiceItems: req.body.invoice_items
-    }, { include: Quotation.InvoiceItems })
+      InvoiceItems: req.body.invoice_items
+    }, { include: InvoiceItem })
     res.status(201).json({ message: 'Quotation created successfully', quotation })
   } catch (error) {
     if (!error.statusCode) {
@@ -111,14 +109,14 @@ exports.updateQuotation = async (req, res, next) => {
   }
   try {
     let quotation = await Quotation.findByPk(req.params.id, { include: InvoiceItem })
-    quotation.firstname = req.body.firstname,
-    quotation.lastname = req.body.lastname,
+    quotation.firstName = req.body.firstName,
+    quotation.lastName = req.body.lastName,
     quotation.company = req.body.company,
     quotation.address = req.body.address,
     quotation.city = req.body.city,
     quotation.total = req.body.total,
     quotation = await quotation.save()
-		const all_invoice_items = quotation.invoiceItems
+		const all_invoice_items = quotation.InvoiceItems
 		const mutable_invoice_items = req.body.invoice_items
 		const diff = mutable_invoice_items.filter(function(mutable_invoice_item) {
 			return !all_invoice_items.some(function(initial_invoice_item) {
@@ -172,7 +170,7 @@ exports.convertToInvoice = (req, res, next) => {
       error.statusCode = 404
       next(error)
     }
-    const invoice_items = quotation.invoiceItems.map((invoice_item) => {
+    const invoice_items = quotation.InvoiceItems.map((invoice_item) => {
       return object = {
       name: invoice_item.name,
       quantity: invoice_item.quantity,
@@ -182,14 +180,14 @@ exports.convertToInvoice = (req, res, next) => {
     })
 
     return Invoice.create({
-      firstname: quotation.firstname,
-      lastname: quotation.lastname,
+      firstName: quotation.firstName,
+      lastName: quotation.lastName,
       company: quotation.company,
       address: quotation.address,
       city: quotation.city,
       total: quotation.total,
       customerId: quotation.customerId,
-      invoiceItems: invoice_items
+      InvoiceItems: invoice_items
     }, { include: Invoice.InvoiceItems })
   })
   .then(invoice => res.status(200).json({

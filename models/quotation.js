@@ -1,23 +1,23 @@
-const Sequelize = require('sequelize');
+'use strict';
+const { Model } = require('sequelize');
 
-const sequelize = require('../util/database');
-
-const Quotation = sequelize.define('quotation', {
-  id: {
-    type: Sequelize.INTEGER,
-    autoIncrement: true,
-    allowNull: false,
-    primaryKey: true
-  },
-  firstname: Sequelize.STRING,
-  lastname: Sequelize.STRING,
-  company: Sequelize.STRING,
-  address: Sequelize.STRING,
-  city: Sequelize.STRING,
-  total: {
-    type: Sequelize.FLOAT,
-    defaultValue: 0
-  }
-});
-
-module.exports = Quotation;
+module.exports = (sequelize, DataTypes) => {
+  class Quotation extends Model {
+    static associate(models) {
+      this.belongsTo(models.Customer);
+      this.hasMany(models.InvoiceItem);
+    }
+  };
+  Quotation.init({
+    firstName: DataTypes.STRING,
+    lastName: DataTypes.STRING,
+    company: DataTypes.STRING,
+    address: DataTypes.STRING,
+    city: DataTypes.STRING,
+    total: DataTypes.FLOAT
+  }, {
+    sequelize,
+    modelName: 'Quotation',
+  });
+  return Quotation;
+};

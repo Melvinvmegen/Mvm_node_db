@@ -1,7 +1,8 @@
-const User = require('../models/user')
 const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const db = require("../models/index");
+const User = db.User;
 
 exports.signUp = async (req, res, next) => {
   const errors =  validationResult(req)

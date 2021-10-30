@@ -11,8 +11,8 @@ router.get('/quotations', isAuth, QuotationController.getQuotations);
 
 // POST /quotation
 router.post('/quotation', isAuth, [
-  body('firstname').trim().isLength({min: 1}),
-  body('lastname').trim().isLength({min: 1}),
+  body('firstName').trim().isLength({min: 1}),
+  body('lastName').trim().isLength({min: 1}),
   body('company').trim().isLength({min: 1}),
 ], QuotationController.createQuotation);
 

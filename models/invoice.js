@@ -1,28 +1,26 @@
-const Sequelize = require('sequelize');
+'use strict';
+const { Model } = require('sequelize')
 
-const sequelize = require('../util/database');
-
-const Invoice = sequelize.define('invoice', {
-  id: {
-    type: Sequelize.INTEGER,
-    autoIncrement: true,
-    allowNull: false,
-    primaryKey: true
-  },
-  firstname: Sequelize.STRING,
-  lastname: Sequelize.STRING,
-  company: Sequelize.STRING,
-  address: Sequelize.STRING,
-  city: Sequelize.STRING,
-  payment_date: Sequelize.DATE,
-  total: {
-    type: Sequelize.FLOAT,
-    defaultValue: 0
-  },
-  paid: {
-    type: Sequelize.BOOLEAN,
-    defaultValue: false
-  }
-});
-
-module.exports = Invoice;
+module.exports = (sequelize, DataTypes) => {
+  class Invoice extends Model {
+    static associate(models) {
+      this.belongsTo(models.Revenu);
+      this.belongsTo(models.Customer);
+      this.hasMany(models.InvoiceItem);
+    }
+  };
+  Invoice.init({
+    firstName: DataTypes.STRING,
+    lastName: DataTypes.STRING,
+    company: DataTypes.STRING,
+    address: DataTypes.STRING,
+    city: DataTypes.STRING,
+    paymentDate: DataTypes.DATE,
+    total: DataTypes.FLOAT,
+    paid: DataTypes.BOOLEAN
+  }, {
+    sequelize,
+    modelName: 'Invoice',
+  });
+  return Invoice;
+};

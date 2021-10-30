@@ -1,9 +1,9 @@
 const { validationResult } = require('express-validator')
-const Invoice = require('../models/invoice')
-const InvoiceItem = require('../models/invoiceItem')
-const path = require('path')
 const { pdfGenerator } = require('../util/pdfGenerator')
-const Sequelize = require('sequelize')
+const path = require('path')
+const Sequelize = require('sequelize');
+const db = require("../models/index");
+const { Invoice, InvoiceItem } = db
 
 exports.getInvoices = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -15,18 +15,20 @@ exports.getInvoices = async (req, res, next) => {
     offset, 
     where: [],
     distinct: true,
-    include: InvoiceItem
+    include: InvoiceItem,
+    order: [
+      ['createdAt', 'DESC'],
+    ],
   }
 
   if (queryParams.name) {
     options.where.push({[Op.or]: [
-      { firstname: {[Op.iLike]: `%${queryParams.name}%`} },
-      { lastname: {[Op.iLike]: `%${queryParams.name}%`} }
+      { firstName: {[Op.iLike]: `%${queryParams.name}%`} },
+      { lastName: {[Op.iLike]: `%${queryParams.name}%`} }
     ]})
   }
-
-  if (queryParams.customerId) {
-    options.where.push({customerId: {[Op.eq]: +queryParams.customerId}})
+  if (queryParams.CustomerId) {
+    options.where.push({CustomerId: {[Op.eq]: +queryParams.CustomerId}})
   }
 
   if (queryParams.total) {
@@ -83,18 +85,18 @@ exports.createInvoice = async (req, res, next) => {
   }
   try {
     const invoice = await Invoice.create({
-      firstname: req.body.firstname,
-      lastname: req.body.lastname,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
       company: req.body.company,
       address: req.body.address,
       city: req.body.city,
       paid: req.body.paid,
       total: req.body.total,
       payment_date: req.body.payment_date,
-      customerId: req.body.customerId,
-      revenuId: req.body.revenuId,
-      invoiceItems: req.body.invoice_items
-    }, { include: Invoice.InvoiceItems })
+      CustomerId: req.body.CustomerId,
+      RevenuId: req.body.revenuId,
+      InvoiceItems: req.body.invoice_items
+    }, { include: [ InvoiceItem ] })
     res.status(201).json({ message: 'Invoice created successfully', invoice})
   } catch (error) {
     if (!error.statusCode) {
@@ -113,17 +115,18 @@ exports.updateInvoice = async (req, res, next) => {
   }
   try {
     let invoice = await Invoice.findByPk(req.params.id, { include: InvoiceItem })
-    invoice.firstname = req.body.firstname,
-    invoice.lastname = req.body.lastname,
-    invoice.company = req.body.company,
-    invoice.address = req.body.address,
-    invoice.city = req.body.city,
-    invoice.paid = req.body.paid,
-    invoice.total = req.body.total,
+    invoice.firstName = req.body.firstName
+    invoice.lastName = req.body.lastName
+    invoice.company = req.body.company
+    invoice.address = req.body.address
+    invoice.city = req.body.city
+    invoice.paid = req.body.paid
+    invoice.total = req.body.total
     invoice.payment_date = req.body.payment_date
-    invoice.revenuId = req.body.revenuId
+    invoice.RevenuId = req.body.revenuId
+    invoice.CustomerId = req.body.CustomerId
     invoice = await invoice.save()
-    const all_invoice_items = invoice.invoiceItems
+    const all_invoice_items = invoice.InvoiceItems
     const mutable_invoice_items = req.body.invoice_items
     const diff = mutable_invoice_items.filter(function(mutable_invoice_item) {
       return !all_invoice_items.some(function(initial_invoice_item) {
@@ -168,7 +171,6 @@ exports.updateInvoice = async (req, res, next) => {
     next(error)
   }
 }
-
 
 exports.deleteInvoice = async (req, res, next) => {
   const id = req.params.id

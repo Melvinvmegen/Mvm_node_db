@@ -11,8 +11,8 @@ router.get('/invoices', isAuth, InvoiceController.getInvoices);
 
 // POST /invoice
 router.post('/invoice', isAuth, [
-  body('firstname').trim().isLength({min: 1}),
-  body('lastname').trim().isLength({min: 1}),
+  body('firstName').trim().isLength({min: 1}),
+  body('lastName').trim().isLength({min: 1}),
   body('company').trim().isLength({min: 1}),
 ], InvoiceController.createInvoice);
 
