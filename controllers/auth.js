@@ -11,8 +11,7 @@ exports.signUp = async (req, res, next) => {
     const error = new Error('Validation failed !')
     error.statusCode = 422
     error.message = errors.errors[0].msg
-    next(error)
-    return
+    return next(error)
   }
   const email = req.body.email
   const password = req.body.password
@@ -22,8 +21,7 @@ exports.signUp = async (req, res, next) => {
     if (user) {
       const error = new Error('A user with this email already exists !')
       error.statusCode = 422
-      next(error)
-      return
+      return next(error)
     }
     const hashedPassword = await bcrypt.hash(password, 12)
     user = await User.create({ email: req.body.email, password: hashedPassword }) 
@@ -45,16 +43,14 @@ exports.login = async (req, res, next) => {
     if (!user) {
       const error = new Error('A user with this email could not be found !')
       error.statusCode = 404
-      next(error)
-      return
+      return next(error)
     }
     loadedUser = user
     const isEqual = await bcrypt.compare(password, user.password)
     if (!isEqual) {
       const error = new Error("Email and password don't match!")
       error.statusCode = 404
-      next(error)
-      return
+      return next(error)
     }
     const token = jwt.sign(
       { email: loadedUser.email, userId: loadedUser.id }, config.secret, 
@@ -74,12 +70,11 @@ exports.login = async (req, res, next) => {
 
 exports.refreshToken = async (req, res, next) => {
   const { refreshToken: requestToken } = req.body
-  console.log(req.body)
-  if (requestToken == null) {
+
+  if (!requestToken) {
     const error = new Error('Refresh Token is required!')
     error.statusCode = 403
-    next(error)
-    return 
+    return next(error)
   }
 
   try {
@@ -88,8 +83,7 @@ exports.refreshToken = async (req, res, next) => {
     if (!refreshToken) {
       const error = new Error('Refresh token not found!')
       error.statusCode = 403
-      next(error)
-      return
+      return next(error)
     }
 
     if (RefreshToken.verifyExpiration(refreshToken)) {
