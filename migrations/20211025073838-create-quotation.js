@@ -54,9 +54,6 @@ module.exports = {
       'Quotations', // name of Source model
       'CustomerId' // key we want to remove
     );
-    await queryInterface.removeColumn(
-      'Quotations', // name of Source model
-    );
     await queryInterface.dropTable('Quotations');
   }
 };

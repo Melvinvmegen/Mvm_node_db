@@ -3,8 +3,7 @@ const { pdfGenerator } = require('../util/pdfGenerator')
 const path = require('path')
 const Sequelize = require('sequelize');
 const db = require("../models/index");
-const Invoice = db.Invoice
-const InvoiceItem = db.InvoiceItem;
+const { Invoice, InvoiceItem } = db
 
 exports.getInvoices = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -172,7 +171,6 @@ exports.updateInvoice = async (req, res, next) => {
     next(error)
   }
 }
-
 
 exports.deleteInvoice = async (req, res, next) => {
   const id = req.params.id

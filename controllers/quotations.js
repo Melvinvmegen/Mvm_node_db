@@ -3,9 +3,7 @@ const { pdfGenerator } = require('../util/pdfGenerator')
 const path = require('path')
 const Sequelize = require('sequelize');
 const db = require("../models/index");
-const Quotation = db.Quotation
-const Invoice = db.Invoice
-const InvoiceItem = db.InvoiceItem;
+const { Quotation, Invoice, InvoiceItem } = db
 
 exports.getQuotations = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -92,7 +90,7 @@ exports.createQuotation = async (req, res, next) => {
       total: req.body.total,
       customerId: req.body.customerId,
       InvoiceItems: req.body.invoice_items
-    }, { include: [ InvoiceItem ] })
+    }, { include: InvoiceItem })
     res.status(201).json({ message: 'Quotation created successfully', quotation })
   } catch (error) {
     if (!error.statusCode) {

@@ -1,8 +1,7 @@
 const { validationResult, Result } = require('express-validator')
 const Sequelize = require('sequelize');
 const db = require("../models/index");
-const Customer = db.Customer;
-const Invoice = db.Invoice
+const { Customer, Invoice } = db
 
 exports.getCustomers = async (req, res, next) => {
   const Op = Sequelize.Op
