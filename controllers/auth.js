@@ -2,14 +2,15 @@ const { validationResult } = require('express-validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const db = require("../models/index");
-const User = db.User;
+const { User, RefreshToken } = db
+const config = require("../config/auth.config.js");
 
 exports.signUp = async (req, res, next) => {
   const errors =  validationResult(req)
   if (!errors.isEmpty()) {
     const error = new Error('Validation failed !')
     error.statusCode = 422
-    error.data = errors.array
+    error.message = errors.errors[0].msg
     next(error)
     return
   }
@@ -50,16 +51,63 @@ exports.login = async (req, res, next) => {
     loadedUser = user
     const isEqual = await bcrypt.compare(password, user.password)
     if (!isEqual) {
-      const error = new Error('Wrong Password!')
+      const error = new Error("Email and password don't match!")
       error.statusCode = 404
       next(error)
       return
     }
     const token = jwt.sign(
-      { email: loadedUser.email, userId: loadedUser.id }, 'secret', 
-      { expiresIn: '7d' }
+      { email: loadedUser.email, userId: loadedUser.id }, config.secret, 
+      { expiresIn: config.jwtExpiration }
     )
-    res.status(200).json({message: 'Successfully signed in', token: token, userId: loadedUser.id})
+
+    let refreshToken = await RefreshToken.createToken(user);
+
+    res.status(200).json({message: 'Successfully signed in', token: token, refreshToken: refreshToken, userId: loadedUser.id})
+  } catch (error) {
+    if (!error.statusCode) {
+      error.statusCode = 500;
+    }
+    next(error)
+  }
+}
+
+exports.refreshToken = async (req, res, next) => {
+  const { refreshToken: requestToken } = req.body
+  console.log(req.body)
+  if (requestToken == null) {
+    const error = new Error('Refresh Token is required!')
+    error.statusCode = 403
+    next(error)
+    return 
+  }
+
+  try {
+    let refreshToken = await RefreshToken.findOne({ where: { token: requestToken } })
+
+    if (!refreshToken) {
+      const error = new Error('Refresh token not found!')
+      error.statusCode = 403
+      next(error)
+      return
+    }
+
+    if (RefreshToken.verifyExpiration(refreshToken)) {
+      RefreshToken.destroy({ where: { id: refreshToken.id } });
+      const error = new Error('Refresh token was expired. Please login')
+      error.statusCode = 403
+      next(error)
+      return
+    }
+    const user = await refreshToken.getUser();
+    let newAccessToken = jwt.sign({ id: user.id }, config.secret, {
+      expiresIn: config.jwtExpiration,
+    });
+
+    return res.status(200).json({
+      accessToken: newAccessToken,
+      refreshToken: refreshToken.token,
+    });
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500;
