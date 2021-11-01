@@ -1,7 +1,7 @@
 const { validationResult, Result } = require('express-validator')
 const Sequelize = require('sequelize');
 const db = require("../models/index");
-const { Revenu, Invoice, Credit, Cost } = db
+const { Revenu, Invoice, Credit, Cost, Quotation } = db
 
 exports.getRevenus = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -13,7 +13,7 @@ exports.getRevenus = async (req, res, next) => {
     offset, 
     where: [],
     distinct: true,
-    include: [Invoice, Credit, Cost],
+    include: [Invoice, Credit, Cost, Quotation],
     order: [
       ['createdAt', 'DESC'],
     ]

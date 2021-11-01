@@ -88,7 +88,7 @@ exports.createQuotation = async (req, res, next) => {
       address: req.body.address,
       city: req.body.city,
       total: req.body.total,
-      customerId: req.body.customerId,
+      CustomerId: req.body.customerId,
       InvoiceItems: req.body.invoice_items
     }, { include: InvoiceItem })
     res.status(201).json({ message: 'Quotation created successfully', quotation })
@@ -109,12 +109,13 @@ exports.updateQuotation = async (req, res, next) => {
   }
   try {
     let quotation = await Quotation.findByPk(req.params.id, { include: InvoiceItem })
-    quotation.firstName = req.body.firstName,
-    quotation.lastName = req.body.lastName,
-    quotation.company = req.body.company,
-    quotation.address = req.body.address,
-    quotation.city = req.body.city,
-    quotation.total = req.body.total,
+    quotation.firstName = req.body.firstName
+    quotation.lastName = req.body.lastName
+    quotation.company = req.body.company
+    quotation.address = req.body.address
+    quotation.city = req.body.city
+    quotation.total = req.body.total
+    quotation.RevenuId = req.body.revenuId
     quotation = await quotation.save()
 		const all_invoice_items = quotation.InvoiceItems
 		const mutable_invoice_items = req.body.invoice_items
@@ -161,25 +162,27 @@ exports.updateQuotation = async (req, res, next) => {
   }
 }
 
-exports.convertToInvoice = (req, res, next) => {
+exports.convertToInvoice = async (req, res, next) => {
   const id = req.params.id
-  Quotation.findByPk(id, { include: InvoiceItem })
-  .then(quotation => {
+  try {
+    const quotation = await Quotation.findByPk(id, { include: InvoiceItem })
     if (!quotation) {
       const error = new Error('Quotation not found.')
       error.statusCode = 404
-      next(error)
+      return next(error)
     }
     const invoice_items = quotation.InvoiceItems.map((invoice_item) => {
-      return object = {
-      name: invoice_item.name,
-      quantity: invoice_item.quantity,
-      unit: invoice_item.unit,
-      total: invoice_item.total
+      object = {
+        name: invoice_item.name,
+        quantity: invoice_item.quantity,
+        unit: invoice_item.unit,
+        total: invoice_item.total
       }
     })
+  
+    console.log(invoice_items)
 
-    return Invoice.create({
+    const invoice = await Invoice.create({
       firstName: quotation.firstName,
       lastName: quotation.lastName,
       company: quotation.company,
@@ -189,36 +192,68 @@ exports.convertToInvoice = (req, res, next) => {
       customerId: quotation.customerId,
       InvoiceItems: invoice_items
     }, { include: Invoice.InvoiceItems })
-  })
-  .then(invoice => res.status(200).json({
-    invoice: invoice,
-    message: 'Quotation successfully converted'
-  }))
-  .catch(error => {
+  
+    res.status(200).json({ invoice: invoice, message: 'Quotation successfully converted' }) 
+  } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
-  })
+  }
+}
+
+exports.cautionPaid = async (req, res, next) => {
+  const id = req.params.id
+  console.log(req.params)
+  try {
+    const quotation = await Quotation.findByPk(id)
+    console.log(quotation)
+    if (!quotation) {
+      console.log('not found')
+      const error = new Error('Quotation not found.')
+      error.statusCode = 404
+      return next(error)
+    }
+    if (quotation.cautionPaid) {
+      console.log('already paid')
+      const error = new Error('Quotation already paid.')
+      error.statusCode = 403
+      return next(error)
+    }
+    if (quotation.RevenuId) {
+      quotation.cautionPaid = true
+      await quotation.save()
+      const revenu = await quotation.getRevenu()
+      const caution = quotation.total * 0.3
+      revenu.pro += caution
+      revenu.total += caution
+      await revenu.save()
+      res.status(201).json({ message: 'Quotation paid successfully', quotation })
+    } 
+  } catch (error) {
+    if (!error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  }
 }
 
 
-exports.deleteQuotation = (req, res, next) => {
+exports.deleteQuotation = async (req, res, next) => {
   const id = req.params.id
-  Quotation.findByPk(id)
-  .then(quotation => {
+  try {
+    const quotation = await Quotation.findByPk(id)
     if (!quotation) {
       const error = new Error('Quotation not found.')
       error.statusCode = 404
-      next(error)
+      return next(error)
     }
-    return quotation.destroy()
-  })
-  .then(result => res.status(200).json({message: 'Quotation successfully destroyed'}))
-  .catch(error => {
+    await quotation.destroy()
+    res.status(200).json({message: 'Quotation successfully destroyed'})
+  } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
     }
     next(error)
-  })
+  }
 }

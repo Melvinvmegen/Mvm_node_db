@@ -4,6 +4,7 @@ const { Model } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   class Quotation extends Model {
     static associate(models) {
+      this.belongsTo(models.Revenu);
       this.belongsTo(models.Customer);
       this.hasMany(models.InvoiceItem);
     }
@@ -14,7 +15,8 @@ module.exports = (sequelize, DataTypes) => {
     company: DataTypes.STRING,
     address: DataTypes.STRING,
     city: DataTypes.STRING,
-    total: DataTypes.FLOAT
+    total: DataTypes.FLOAT,
+    cautionPaid: DataTypes.BOOLEAN
   }, {
     sequelize,
     modelName: 'Quotation',
