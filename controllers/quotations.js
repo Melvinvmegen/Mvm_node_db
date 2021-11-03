@@ -15,7 +15,10 @@ exports.getQuotations = async (req, res, next) => {
     offset, 
     where: [],
     distinct: true,
-    include: InvoiceItem
+    include: InvoiceItem,
+    order: [
+      ['createdAt', 'DESC'],
+    ]
   }
 
   if (queryParams.name) {
@@ -88,7 +91,7 @@ exports.createQuotation = async (req, res, next) => {
       address: req.body.address,
       city: req.body.city,
       total: req.body.total,
-      CustomerId: req.body.customerId,
+      CustomerId: req.body.CustomerId,
       InvoiceItems: req.body.invoice_items
     }, { include: InvoiceItem })
     res.status(201).json({ message: 'Quotation created successfully', quotation })
@@ -116,6 +119,7 @@ exports.updateQuotation = async (req, res, next) => {
     quotation.city = req.body.city
     quotation.total = req.body.total
     quotation.RevenuId = req.body.revenuId
+    quotation.CustomerId = req.body.CustomerId
     quotation = await quotation.save()
 		const all_invoice_items = quotation.InvoiceItems
 		const mutable_invoice_items = req.body.invoice_items
@@ -171,16 +175,11 @@ exports.convertToInvoice = async (req, res, next) => {
       error.statusCode = 404
       return next(error)
     }
-    const invoice_items = quotation.InvoiceItems.map((invoice_item) => {
-      object = {
-        name: invoice_item.name,
-        quantity: invoice_item.quantity,
-        unit: invoice_item.unit,
-        total: invoice_item.total
-      }
-    })
-  
-    console.log(invoice_items)
+    if (quotation.InvoiceId) {
+      const error = new Error('Quotation already converted.')
+      error.statusCode = 403
+      return next(error)
+    }
 
     const invoice = await Invoice.create({
       firstName: quotation.firstName,
@@ -189,10 +188,18 @@ exports.convertToInvoice = async (req, res, next) => {
       address: quotation.address,
       city: quotation.city,
       total: quotation.total,
-      customerId: quotation.customerId,
-      InvoiceItems: invoice_items
+      CustomerId: quotation.CustomerId
     }, { include: Invoice.InvoiceItems })
-  
+
+    const createInvoiceItemsPromises = [];
+    quotation.InvoiceItems.forEach(invoice_item => {
+      invoice_item.InvoiceId = invoice.id
+      createInvoiceItemsPromises.push(invoice_item.save())
+    })
+    await Promise.all(createInvoiceItemsPromises)
+
+    quotation.InvoiceId = invoice.id
+    await quotation.save()
     res.status(200).json({ invoice: invoice, message: 'Quotation successfully converted' }) 
   } catch (error) {
     if (!error.statusCode) {
@@ -209,13 +216,11 @@ exports.cautionPaid = async (req, res, next) => {
     const quotation = await Quotation.findByPk(id)
     console.log(quotation)
     if (!quotation) {
-      console.log('not found')
       const error = new Error('Quotation not found.')
       error.statusCode = 404
       return next(error)
     }
     if (quotation.cautionPaid) {
-      console.log('already paid')
       const error = new Error('Quotation already paid.')
       error.statusCode = 403
       return next(error)

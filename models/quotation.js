@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       this.belongsTo(models.Revenu);
       this.belongsTo(models.Customer);
+      this.belongsTo(models.Invoice);
       this.hasMany(models.InvoiceItem);
     }
   };
