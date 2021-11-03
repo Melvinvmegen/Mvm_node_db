@@ -12,7 +12,8 @@ exports.getCustomers = async (req, res, next) => {
     limit, 
     offset, 
     where: [],
-    include: Invoice
+    include: Invoice,
+    distinct: true
   }
 
   if (queryParams.name) {
