@@ -53,7 +53,7 @@ exports.updateRevenu = async (req, res, next) => {
     return next(error)
   }
   try {
-    let revenu = await Revenu.findByPk(req.params.id, { include: [Credit, Cost, Invoice] })
+    let revenu = await Revenu.findByPk(req.params.id, { include: [Credit, Cost, Invoice, Quotation] })
     const all_credits = revenu.Credits
     const mutable_credits = req.body.credits
     const diff_credits = mutable_credits.filter(function(mutable_credit) {
@@ -109,7 +109,7 @@ exports.updateRevenu = async (req, res, next) => {
         if (cost._destroy) {
           updateCostsPromises.push(found_cost.destroy())
         } else {
-          found_cost.reason = cost.name,
+          found_cost.name = cost.name,
           found_cost.total = cost.total
           updateCostsPromises.push(found_cost.save())
         }
@@ -120,7 +120,28 @@ exports.updateRevenu = async (req, res, next) => {
     await Promise.all(updateCreditsPromises)
     revenu = await revenu.reload()
     revenu = await revenu.save()
-    revenu = await Revenu.findByPk(revenu.id, { include: [Credit, Cost, Invoice] })
+    revenu = await Revenu.findByPk(revenu.id, { include: [Credit, Cost, Invoice, Quotation] })
+    let revenu_total = 0
+    let revenu_pro = 0
+    let revenu_perso = 0
+    if (revenu.Invoices) {
+      revenu.Invoices.forEach(invoice => {
+        revenu_pro += invoice.total
+      }); 
+    }
+    if (revenu.Quotations) {
+      revenu.Quotations.forEach(quotation => {
+        revenu_pro += quotation.total*0.3
+      }); 
+    }
+    if (revenu.Credits) {
+      revenu.Credits.forEach(credit => revenu_perso += credit.total); 
+    }
+    revenu_total = revenu_pro + revenu_perso
+    revenu.pro = revenu_pro
+    revenu.perso = revenu_perso
+    revenu.total = revenu_total;
+    revenu = await revenu.save()
     res.status(201).json({ message: 'Revenu updated successfully', revenu })
   } catch (error) {
     if (!error.statusCode) {
@@ -132,7 +153,7 @@ exports.updateRevenu = async (req, res, next) => {
 
 exports.showRevenu = (req, res, next) => {
   const id = req.params.id
-  Revenu.findByPk(id, { include: [Invoice, Credit, Cost] } )
+  Revenu.findByPk(id, { include: [Invoice, Credit, Cost, Quotation] } )
   .then(revenu => {
     if (!revenu) {
       const error = new Error('Revenu not found.')
