@@ -33,7 +33,7 @@ app.use((error, req, res, next) => {
 })
 
 cron.schedule('0 0 1 * *', function() {
-  Revenu.create()
+  Revenu.create(({createdAt: new Date(), total: 0, pro: 0, perso: 0}))
 });
 
 db.sequelize.sync()
