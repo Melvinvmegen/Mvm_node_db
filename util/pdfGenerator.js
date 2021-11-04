@@ -1,7 +1,7 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
 
-exports.pdfGenerator = function (invoice, path) {
+exports.pdfGenerator = function (invoice) {
   let doc = new PDFDocument({ margin: 50 });
 
   generateHeader(doc, invoice);
@@ -10,7 +10,6 @@ exports.pdfGenerator = function (invoice, path) {
   generateFooter(doc);
 
   doc.end();
-  doc.pipe(fs.createWriteStream(path));
   return doc
 }
 

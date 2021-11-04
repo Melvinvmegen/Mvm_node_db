@@ -63,7 +63,7 @@ exports.showQuotation = async (req, res, next) => {
       const quotationPath = path.join('data', 'quotations', quotationName)
       res.setHeader('Content-Type', 'application/pdf')
       res.setHeader('Content-Disposition', `inline; filename="${quotationName}"`)
-      let doc = pdfGenerator(quotation, quotationPath)
+      let doc = pdfGenerator(quotation)
       doc.pipe(res)
     } else {
       res.status(200).json(quotation)

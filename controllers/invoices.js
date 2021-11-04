@@ -63,7 +63,7 @@ exports.showInvoice = async (req, res, next) => {
     
       res.setHeader('Content-Type', 'application/pdf')
       res.setHeader('Content-Disposition', `inline; filename="${invoiceName}"`)
-      let doc = pdfGenerator(invoice, invoicePath)
+      let doc = pdfGenerator(invoice)
       doc.pipe(res)
     } else {
       res.status(200).json(invoice)
