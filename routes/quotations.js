@@ -19,6 +19,9 @@ router.post('/quotation', isAuth, [
 // POST /quotation
 router.post('/convert_quotation/:id', isAuth, QuotationController.convertToInvoice);
 
+// POST /quotation
+router.post('/quotation_caution_paid/:id', isAuth, QuotationController.cautionPaid);
+
 // GET /quotation
 router.get('/quotation/:id', isAuth, QuotationController.showQuotation);
 
