@@ -47,7 +47,7 @@ function generateTableHeader(doc, invoice) {
 
 function generateInvoiceTable(doc, invoice) {
   let i = 0
-  const invoiceTableTop = 330;
+  let invoiceTableTop = 330;
 
   doc.font("Helvetica-Bold");
   generateHr(doc, invoiceTableTop);
@@ -64,20 +64,25 @@ function generateInvoiceTable(doc, invoice) {
   for (const invoice_item of invoice.InvoiceItems) {
     i += 1
     const item = invoice_item;
-    const position = invoiceTableTop + (i + 1) * 20;
+    let position = invoiceTableTop + (i + 1) * 20
+    if (position > 630) {
+      doc.addPage();
+      invoiceTableTop = -200;
+      position = invoiceTableTop + (i + 1) * 20
+    }
     generateTableRow(doc, position, item.name, item.unit, item.quantity, formatCurrency(item.total * 100));
     generateHr(doc, position + 15);
   }
 
-  const subtotalPosition = invoiceTableTop + (i + 1) * 30;
-  doc.font("Helvetica-Bold");
+  const subtotalPosition = invoiceTableTop + (i + 3) * 20;
+  
+  doc.fontSize(12).font("Helvetica-Bold");
   generateTableRow(doc, subtotalPosition, "", "", "Total", formatCurrency(invoice.total * 100));
-  doc.font("Helvetica");
+  doc.fontSize(10).font("Helvetica");
 }
 
 function generateTableRow(doc, y, item, unitCost, quantity, lineTotal) {
-  doc.fontSize(10)
-    .text(item, 50, y)
+  doc.text(item, 50, y)
     .text(unitCost, 230, y, { width: 90, align: "right" })
     .text(quantity, 330, y, { width: 90, align: "right" })
     .text(lineTotal, 430, y, { width: 90, align: "right" });
