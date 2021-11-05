@@ -1,8 +1,11 @@
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const db = require("./models/index");
 const cron = require('node-cron');
-
 const customerRoutes = require('./routes/customers');
 const invoiceRoutes = require('./routes/invoices');
 const quotationRoutes = require('./routes/quotations');
@@ -37,7 +40,7 @@ cron.schedule('0 0 1 * *', function() {
 });
 
 db.sequelize.sync()
-.then(result => {
+.then(() => {
   app.listen(8080)
 })
 .catch(err => {
