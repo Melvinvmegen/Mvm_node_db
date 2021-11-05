@@ -62,7 +62,12 @@ function generateInvoiceTable(doc, invoice) {
   doc.font("Helvetica");
   for (const invoice_item of invoice.InvoiceItems) {
     i += 1
-    const item = invoice_item;
+    let item
+    try {
+      item = JSON.parse(invoice_item);
+    } catch (e) {
+      item = invoice_item
+    }
     let position = invoiceTableTop + (i + 1) * 20
     if (position > 630) {
       doc.addPage();
