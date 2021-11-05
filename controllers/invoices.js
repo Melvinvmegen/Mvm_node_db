@@ -176,8 +176,8 @@ exports.sendInvoice = async (req, res, next) => {
   try {
     const customer = await Customer.findByPk(req.query.CustomerId)
     req.query.email = customer.email
-    await sendInvoice(req.query)
-    res.status(200).json({ message: 'Invoice sent successfully' })
+    const message = await sendInvoice(req.query)
+    res.status(200).json({ message: message })
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
