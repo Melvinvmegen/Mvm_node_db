@@ -3,7 +3,8 @@ const { pdfGenerator } = require('../util/pdfGenerator')
 const path = require('path')
 const Sequelize = require('sequelize');
 const db = require("../models/index");
-const { Invoice, InvoiceItem } = db
+const { Invoice, InvoiceItem, Customer } = db
+const { sendInvoice } = require('../util/mailer')
 
 exports.getInvoices = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -59,7 +60,6 @@ exports.showInvoice = async (req, res, next) => {
     }
     if (isPDF) {
       const invoiceName = 'invoice-' + invoice.id + '.pdf'
-      const invoicePath = path.join('data', 'invoices', invoiceName)
     
       res.setHeader('Content-Type', 'application/pdf')
       res.setHeader('Content-Disposition', `inline; filename="${invoiceName}"`)
@@ -164,6 +164,20 @@ exports.updateInvoice = async (req, res, next) => {
     invoice = await invoice.save()
     invoice = await Invoice.findByPk(invoice.id, { include: InvoiceItem })
     res.status(201).json({ message: 'Invoice updated successfully', invoice })
+  } catch (error) {
+    if (!error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  }
+}
+
+exports.sendInvoice = async (req, res, next) => {
+  try {
+    const customer = await Customer.findByPk(req.query.CustomerId)
+    req.query.email = customer.email
+    await sendInvoice(req.query)
+    res.status(200).json({ message: 'Invoice sent successfully' })
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500

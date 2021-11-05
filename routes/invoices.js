@@ -22,6 +22,9 @@ router.get('/invoice/:id', isAuth, InvoiceController.showInvoice);
 // PUT /invoice
 router.put('/invoice/:id', isAuth, InvoiceController.updateInvoice);
 
+// GET /send_invoice
+router.get('/send_invoice', isAuth, InvoiceController.sendInvoice);
+
 // DELETE /invoice
 router.delete('/invoice/:id', isAuth, InvoiceController.deleteInvoice);
 
