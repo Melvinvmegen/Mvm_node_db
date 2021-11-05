@@ -15,5 +15,5 @@
 
 /node_modules
 /public
-sendgrid.env
+.env
 dbexport.pgsql
