@@ -1,6 +1,6 @@
 const repl = require("repl")
 const db = require("./models/index");
-const { sequelize, User, Customer, Invoice, Quotation, InvoiceItem, Revenu} = db
+const { sequelize, User, Customer, Invoice, Quotation, InvoiceItem, Revenu, Cost, Credit } = db
 
 sequelize.sync()
   .then(() => {
@@ -13,4 +13,6 @@ sequelize.sync()
     replServer.context.Invoice = Invoice
     replServer.context.InvoiceItem = InvoiceItem
     replServer.context.Revenu = Revenu
+    replServer.context.Cost = Cost
+    replServer.context.Credit = Credit
   })
