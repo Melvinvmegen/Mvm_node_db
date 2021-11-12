@@ -115,6 +115,7 @@ exports.updateInvoice = async (req, res, next) => {
   }
   try {
     let invoice = await Invoice.findByPk(req.params.id, { include: InvoiceItem })
+    console.log(req.body)
     invoice.firstName = req.body.firstName
     invoice.lastName = req.body.lastName
     invoice.company = req.body.company
@@ -122,12 +123,12 @@ exports.updateInvoice = async (req, res, next) => {
     invoice.city = req.body.city
     invoice.paid = req.body.paid
     invoice.total = req.body.total
-    invoice.payment_date = req.body.payment_date
+    invoice.paymentDate = req.body.paymentDate
     invoice.RevenuId = req.body.revenuId
     invoice.CustomerId = req.body.CustomerId
     invoice = await invoice.save()
     const all_invoice_items = invoice.InvoiceItems
-    const mutable_invoice_items = req.body.invoice_items
+    const mutable_invoice_items = req.body.InvoiceItems
     const diff = mutable_invoice_items.filter(function(mutable_invoice_item) {
       return !all_invoice_items.some(function(initial_invoice_item) {
         return initial_invoice_item.id == mutable_invoice_item.id

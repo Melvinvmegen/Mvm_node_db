@@ -78,8 +78,8 @@ exports.updateRevenu = async (req, res, next) => {
         if (credit._destroy) {
           updateCreditsPromises.push(found_credit.destroy())
         } else {
-          found_credit.reason = credit.reason,
-          found_credit.creditor = credit.creditor,
+          found_credit.reason = credit.reason
+          found_credit.creditor = credit.creditor
           found_credit.total = credit.total
           updateCreditsPromises.push(found_credit.save())
         }
@@ -109,7 +109,7 @@ exports.updateRevenu = async (req, res, next) => {
         if (cost._destroy) {
           updateCostsPromises.push(found_cost.destroy())
         } else {
-          found_cost.name = cost.name,
+          found_cost.name = cost.name
           found_cost.total = cost.total
           updateCostsPromises.push(found_cost.save())
         }
