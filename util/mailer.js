@@ -35,7 +35,7 @@ function getMessage(invoice) {
 
   return {
     to: invoice.email,
-    from: 'melvin.vmegen@gmail.com',
+    from: 'contact@melvinvmegen.com',
     subject: `Facture ${month}`,
     text: `Hello ${firstname}, Tu trouveras ci-joint la facture du mois de ${month}.`,
     html: `<span>Hello ${firstname}</span>
