@@ -14,10 +14,16 @@ module.exports = {
       price: {
         type: Sequelize.FLOAT
       },
-      price_purchase: {
+      pricePurchase: {
         type: Sequelize.FLOAT
       },
-      price_change: {
+      priceChange: {
+        type: Sequelize.FLOAT
+      },
+      buyingDate: {
+        type: Sequelize.DATE
+      },
+      quantityPurchase: {
         type: Sequelize.FLOAT
       },
       createdAt: {

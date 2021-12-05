@@ -8,6 +8,7 @@ const invoiceRoutes = require('./routes/invoices');
 const quotationRoutes = require('./routes/quotations');
 const revenuRoutes = require('./routes/revenus');
 const authRoutes = require('./routes/auth');
+const cryptoRoutes = require('./routes/cryptos');
 const Revenu = db.Revenu;
 
 const app = express();
@@ -21,10 +22,11 @@ app.use((req, res, next) => {
   next();
 })
 
-app.use('/', customerRoutes);
+app.use('/', customerRoutes)
 app.use('/', invoiceRoutes)
 app.use('/', quotationRoutes)
 app.use('/', revenuRoutes)
+app.use('/', cryptoRoutes)
 app.use('/users/', authRoutes)
 app.use((error, req, res, next) => {
   const status = error.statusCode
