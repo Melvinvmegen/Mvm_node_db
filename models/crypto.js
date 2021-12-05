@@ -9,7 +9,8 @@ module.exports = (sequelize, DataTypes) => {
     price: DataTypes.FLOAT,
     pricePurchase: DataTypes.FLOAT,
     quantityPurchase: DataTypes.FLOAT,
-    priceChange: DataTypes.FLOAT
+    priceChange: DataTypes.FLOAT,
+    fees: DataTypes.FLOAT
   }, {
     sequelize,
     modelName: 'Crypto'

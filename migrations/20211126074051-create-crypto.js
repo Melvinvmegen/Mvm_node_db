@@ -26,6 +26,9 @@ module.exports = {
       quantityPurchase: {
         type: Sequelize.FLOAT
       },
+      fees: {
+        type: Sequelize.FLOAT
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE
