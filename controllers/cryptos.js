@@ -1,6 +1,7 @@
 const db = require('../models/index');
-const { Crypto, Credit } = db
+const { Crypto, Credit, Cost, Revenu } = db
 const axios = require('axios').default;
+const Sequelize = require('sequelize');
 
 // GET /cryptos
 exports.getCryptos = async (req, res, next) => {
@@ -17,6 +18,7 @@ exports.getCryptos = async (req, res, next) => {
 
 // POST /crypto
 exports.createCrypto = async (req, res, next) => {
+  const Op = Sequelize.Op
   let requestOptions = {
     method: 'GET',
     url: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest',
@@ -32,54 +34,38 @@ exports.createCrypto = async (req, res, next) => {
     gzip: true
   };
   try {
-    
     const response = await axios(requestOptions)
-    // const fetchedCrypto = response.data.data.filter((element) => element.name === req.body.name)
-    const fetchedCrypto = [
-      {
-        id: 1966,
-        name: 'Decentraland',
-        symbol: 'MANA',
-        slug: 'decentraland',
-        num_market_pairs: 192,
-        date_added: '2017-09-17T00:00:00.000Z',
-        tags: [
-          'platform',
-          'collectibles-nfts',
-          'gaming',
-          'payments',
-          'metaverse',
-          'boostvc-portfolio',
-          'dcg-portfolio',
-          'fabric-ventures-portfolio',
-          'kinetic-capital',
-          'polygon-ecosystem',
-          'play-to-earn'
-        ],
-        max_supply: null,
-        circulating_supply: 1824617134.8740842,
-        total_supply: 2193982127.320146,
-        platform: {
-          id: 1027,
-          name: 'Ethereum',
-          symbol: 'ETH',
-          slug: 'ethereum',
-          token_address: '0x0f5d2fb29fb7d3cfee444a200298f468908cc942'
-        },
-        cmc_rank: 23,
-        last_updated: '2021-11-27T13:51:44.000Z',
-        quote: { EUR: [Object] }
-      }
-    ]
+    const fetchedCrypto = response.data.data.filter((element) => element.name === req.body.name)
     const values = fetchedCrypto[0].quote.EUR
+    const buyingDate = req.body.buyingDate
     const crypto = await Crypto.create({
       name: req.body.name,
       price: values.price,
       percentageChange: values.percent_change_30d,
       pricePurchase: req.body.pricePurchase,
       quantityPurchase: req.body.quantityPurchase,
-      buyingDate: req.body.buyingDate
+      buyingDate: buyingDate,
+      fees: req.body.fees
     })
+
+    const initialDate = new Date(buyingDate)
+    const firstDay = new Date(initialDate.getFullYear(), initialDate.getMonth())
+    const lastDay = new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, 0)
+
+    const revenu = await Revenu.findAll({
+      where: {
+        createdAt: {
+          [Op.between]: [firstDay , lastDay],
+        } 
+      }
+    })
+
+    await Cost.create({
+      name: crypto.name,
+      total: crypto.pricePurchase * crypto.quantityPurchase + crypto.fees,
+      RevenuId: revenu[0].id
+    })
+
     res.status(201).json({ message: 'Crypto created successfully', crypto })
   } catch (error) {
     if (!error.statusCode) {
@@ -90,7 +76,7 @@ exports.createCrypto = async (req, res, next) => {
 };
 
 // PUT /crypto
-exports.fetchCrypto = async (req, res, next) => {
+exports.updateCryptos = async (req, res, next) => {
   let requestOptions = {
     method: 'GET',
     url: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest',
@@ -108,11 +94,13 @@ exports.fetchCrypto = async (req, res, next) => {
   try {
     const response = await axios(requestOptions)
     const cryptos = await Crypto.findAll()
-    cryptos.forEach((crypto) => {
+    let crypto;
+    cryptos.forEach((cryptoObj) => {
+      crypto = cryptoObj
       const foundCrypto = response.data.data.filter((element) => element.name === crypto.name)[0]
       crypto.price = foundCrypto.quote.EUR.price
       crypto.percentage_change = foundCrypto.quote.EUR.percent_change_30d
-      crypto.price_purchase = req.body.price_purchase
+      crypto.priceChange = crypto.price - crypto.pricePurchase
     })
     await crypto.save()
     res.status(201).json({ message: 'Crypto successfully fetched', crypto })
