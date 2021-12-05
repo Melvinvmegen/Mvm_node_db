@@ -11,8 +11,8 @@ router.get('/cryptos', isAuth, CryptoController.getCryptos);
 // POST /crypto
 router.post('/crypto', isAuth, CryptoController.createCrypto);
 
-// POST /crypto
-router.post('/crypto', isAuth, CryptoController.fetchCrypto);
+// GET /crypto
+router.get('/updateCryptos', isAuth, CryptoController.updateCryptos);
 
 // PUT /crypto
 router.put('/checkout_crypto/:id', isAuth, CryptoController.checkoutCrypto);
