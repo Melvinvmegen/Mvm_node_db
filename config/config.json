@@ -14,12 +14,13 @@
     "dialect": "postgres"
   },
   "production": {
-    "username": "postgres",
-    "password": "password",
-    "database": "MVM_Node_DB_production",
-    "host": "localhost",
+    "use_env_variable": "DATABASE_URL",
     "dialect": "postgres",
-    "operatorsAliases": false,
-    "use_env_variable": "DATABASE_URL"
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    }
   }
 }
