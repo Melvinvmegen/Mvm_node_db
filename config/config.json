@@ -17,8 +17,5 @@
     "username": "postgres",
     "database": "database_production",
     "dialect": "postgres",
-    "dialectOptions": {
-      "ssl": true
-    }
   }
 }
