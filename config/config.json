@@ -15,8 +15,11 @@
   },
   "production": {
     "username": "postgres",
-    "database": "database_production",
+    "password": "password",
+    "database": "MVM_Node_DB_production",
+    "host": "localhost",
     "dialect": "postgres",
+    "operatorsAliases": false,
     "use_env_variable": "DATABASE_URL"
   }
 }
