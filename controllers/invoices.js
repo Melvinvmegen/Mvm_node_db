@@ -1,6 +1,5 @@
 const { validationResult } = require('express-validator')
 const { pdfGenerator } = require('../util/pdfGenerator')
-const path = require('path')
 const Sequelize = require('sequelize');
 const db = require("../models/index");
 const { Invoice, InvoiceItem, Customer } = db
@@ -92,10 +91,13 @@ exports.createInvoice = async (req, res, next) => {
       city: req.body.city,
       paid: req.body.paid,
       total: req.body.total,
-      payment_date: req.body.payment_date,
+      paymentDate: req.body.paymentDate,
       CustomerId: req.body.CustomerId,
       RevenuId: req.body.revenuId,
-      InvoiceItems: req.body.invoice_items
+      InvoiceItems: req.body.invoice_items,
+      tvaApplicable: req.body.tvaApplicable,
+      totalTTC: req.body.totalTTC,
+      tvaAmount: req.body.tvaAmount
     }, { include: [ InvoiceItem ] })
     res.status(201).json({ message: 'Invoice created successfully', invoice})
   } catch (error) {
@@ -122,44 +124,50 @@ exports.updateInvoice = async (req, res, next) => {
     invoice.city = req.body.city
     invoice.paid = req.body.paid
     invoice.total = req.body.total
-    invoice.payment_date = req.body.payment_date
+    invoice.paymentDate = req.body.paymentDate
     invoice.RevenuId = req.body.revenuId
     invoice.CustomerId = req.body.CustomerId
+    invoice.tvaApplicable = req.body.tvaApplicable
+    invoice.totalTTC = req.body.totalTTC
+    invoice.tvaAmount = req.body.tvaAmount
     invoice = await invoice.save()
     const all_invoice_items = invoice.InvoiceItems
     const mutable_invoice_items = req.body.invoice_items
-    const diff = mutable_invoice_items.filter(function(mutable_invoice_item) {
-      return !all_invoice_items.some(function(initial_invoice_item) {
-        return initial_invoice_item.id == mutable_invoice_item.id
+    if (mutable_invoice_items) {
+      const diff = mutable_invoice_items.filter(function(mutable_invoice_item) {
+        return !all_invoice_items.some(function(initial_invoice_item) {
+          return initial_invoice_item.id == mutable_invoice_item.id
+        })
       })
-    })
-    const included = mutable_invoice_items.filter(function(mutable_invoice_item) {
-      return all_invoice_items.some(function(initial_invoice_item) {
-        return initial_invoice_item.id == mutable_invoice_item.id
+      const included = mutable_invoice_items.filter(function(mutable_invoice_item) {
+        return all_invoice_items.some(function(initial_invoice_item) {
+          return initial_invoice_item.id == mutable_invoice_item.id
+        })
       })
-    })
-    const createInvoiceItemsPromises = [];
-    diff.forEach(invoice_item => {
-      createInvoiceItemsPromises.push(InvoiceItem.create(invoice_item))
-    })
+      const createInvoiceItemsPromises = [];
+      diff.forEach(invoice_item => {
+        createInvoiceItemsPromises.push(InvoiceItem.create(invoice_item))
+      })
+    
+      await Promise.all(createInvoiceItemsPromises)
+      const updateInvoiceItemsPromises = [];
   
-    await Promise.all(createInvoiceItemsPromises)
-    const updateInvoiceItemsPromises = [];
-
-    included.forEach(invoice_item => {
-      InvoiceItem.findByPk(invoice_item.id).then(found_invoice_item => {
-        if (invoice_item._destroy) {
-          updateInvoiceItemsPromises.push(found_invoice_item.destroy())
-        } else {
-          found_invoice_item.quantity = invoice_item.quantity,
-          found_invoice_item.unit = invoice_item.unit,
-          found_invoice_item.total = invoice_item.total
-          updateInvoiceItemsPromises.push(found_invoice_item.save())
-        }
+      included.forEach(invoice_item => {
+        InvoiceItem.findByPk(invoice_item.id).then(found_invoice_item => {
+          if (invoice_item._destroy) {
+            updateInvoiceItemsPromises.push(found_invoice_item.destroy())
+          } else {
+            found_invoice_item.quantity = invoice_item.quantity,
+            found_invoice_item.unit = invoice_item.unit,
+            found_invoice_item.total = invoice_item.total
+            updateInvoiceItemsPromises.push(found_invoice_item.save())
+          }
+        })
       })
-    })
+  
+      await Promise.all(updateInvoiceItemsPromises)
+    }
 
-    await Promise.all(updateInvoiceItemsPromises)
     invoice = await invoice.reload()
     invoice = await invoice.save()
     invoice = await Invoice.findByPk(invoice.id, { include: InvoiceItem })

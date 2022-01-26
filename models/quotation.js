@@ -17,7 +17,10 @@ module.exports = (sequelize, DataTypes) => {
     address: DataTypes.STRING,
     city: DataTypes.STRING,
     total: DataTypes.FLOAT,
-    cautionPaid: DataTypes.BOOLEAN
+    cautionPaid: DataTypes.BOOLEAN,
+    tvaApplicable: DataTypes.BOOLEAN,
+    totalTTC: DataTypes.FLOAT,
+    tvaAmount: DataTypes.FLOAT
   }, {
     sequelize,
     modelName: 'Quotation',
