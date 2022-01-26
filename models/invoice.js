@@ -19,7 +19,10 @@ module.exports = (sequelize, DataTypes) => {
       city: DataTypes.STRING,
       paymentDate: DataTypes.DATE,
       total: DataTypes.FLOAT,
-      paid: DataTypes.BOOLEAN
+      paid: DataTypes.BOOLEAN,
+      tvaApplicable: DataTypes.BOOLEAN,
+      totalTTC: DataTypes.FLOAT,
+      tvaAmount: DataTypes.FLOAT
     },
     {
       sequelize,

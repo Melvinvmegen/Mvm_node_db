@@ -1,4 +1,3 @@
-const fs = require("fs");
 const PDFDocument = require("pdfkit");
 
 exports.pdfGenerator = function (invoice) {
@@ -7,7 +6,7 @@ exports.pdfGenerator = function (invoice) {
   generateHeader(doc, invoice);
   generateTableHeader(doc, invoice);
   generateInvoiceTable(doc, invoice);
-  generateFooter(doc);
+  generateFooter(doc, invoice);
 
   doc.end();
   return doc
@@ -38,7 +37,7 @@ function generateTableHeader(doc, invoice) {
   doc
     .fillColor("#444444")
     .fontSize(20)
-    .text(`${invoice.constructor.name == 'quotation' ? 'Devis' : 'Facture'} n° : ${invoice.id}`, 50, 260)
+    .text(`${invoice.constructor.name === 'Quotation' ? 'Devis' : 'Facture'} n° : ${invoice.id}`, 50, 260)
     .fontSize(10)
     .text(`Le : ${date}`, 50, 290)
     .text(`Mode de réglement : paiement à réception (RIB ci-dessous).`, 50, 310);
@@ -79,9 +78,22 @@ function generateInvoiceTable(doc, invoice) {
   }
 
   const subtotalPosition = invoiceTableTop + (i + 3) * 20;
-  
+  let totalTTCPostition = subtotalPosition + 20
+  if (invoice.tvaApplicable) {
+    generateTableRow(doc, totalTTCPostition, "", "", "Total (HT)", formatCurrency(invoice.total * 100));
+    doc.fontSize(8).font("Helvetica");
+    generateTableRow(doc, subtotalPosition + 40, "", "", "TVA 20%", formatCurrency(invoice.tvaAmount * 100));
+    // Dirty exception of generateHr as it used only
+    doc
+      .strokeColor("#aaaaaa")
+      .lineWidth(1)
+      .moveTo(350, subtotalPosition + 55)
+      .lineTo(550, subtotalPosition + 55)
+      .stroke();
+    totalTTCPostition += 50
+  }
   doc.fontSize(12).font("Helvetica-Bold");
-  generateTableRow(doc, subtotalPosition, "", "", "Total", formatCurrency(invoice.total * 100));
+  generateTableRow(doc, totalTTCPostition, "", "", "Total (TTC)", formatCurrency(invoice.totalTTC * 100));
   doc.fontSize(10).font("Helvetica");
 }
 
@@ -112,19 +124,23 @@ function formatDate(date) {
   return date = `${mm} - ${dd} - ${yyyy}`
 }
 
-function generateFooter(doc) {
+function generateFooter(doc, invoice) {
   generateHr(doc, 690);
+
+  const tvaText = invoice.tvaApplicable ? "" : "* TVA non applicable - article 293 B du CGI. Paiement à réception par virement. A défaut et conformément à la loi 2008-776 du 4 août 2008, un intérêt de retard égal à trois fois le taux légal sera appliqué, ainsi qu'une indemnité forfaitaire pour frais de recouvrement de 40 € (Décret 2012-1115 du 02/10/2012). Pas d'escompte pour paiement anticipé."
+  const tvaNumber = invoice.tvaApplicable ? "; N°TVA : FR54840604342" : ""
 
   doc
     .fontSize(8)
     .text(
-      `* TVA non applicable - article 293 B du CGI. Paiement à réception par virement. A défaut et conformément à la loi 2008-776 du 4 aoû t 2008, un intérêt de retard égal à trois fois le taux légal sera appliqué, ainsi qu'une indemnité forfaitaire pour frais de recouvrement de 40 € (Décret 2012-1115 du 02/10/2012). Pas d'escompte pour paiement anticipé.`,
+      tvaText,
       50,
       650,
       { align: "left", width: 500 }
     )
     .moveDown()
-    .text("Code IBAN : FR76 3005 6002 7102 7100 5042 249", 50, 710, { align: "center" })
-    .text("Code BIC : CCFRFRPP", 50, 720, { align: "center" })
-    .text("Titulaire : VAN MEGEN Melvin", 50, 730, { align: "center" })
+    .text("Code IBAN : FR76 3005 6002 7102 7100 5042 249", 50, 700, { align: "center" })
+    .text("Code BIC : CCFRFRPP", 50, 710, { align: "center" })
+    .text("Titulaire : VAN MEGEN Melvin", 50, 720, { align: "center" })
+    .text(`SIRET : 87975576700016${tvaNumber}`, 50, 730, { align: "center" })
 }

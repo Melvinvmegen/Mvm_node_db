@@ -92,7 +92,8 @@ exports.createQuotation = async (req, res, next) => {
       city: req.body.city,
       total: req.body.total,
       CustomerId: req.body.CustomerId,
-      InvoiceItems: req.body.invoice_items
+      InvoiceItems: req.body.invoice_items,
+      tvaApplicable: req.body.tvaApplicable
     }, { include: InvoiceItem })
     res.status(201).json({ message: 'Quotation created successfully', quotation })
   } catch (error) {
@@ -120,9 +121,10 @@ exports.updateQuotation = async (req, res, next) => {
     quotation.total = req.body.total
     quotation.RevenuId = req.body.revenuId
     quotation.CustomerId = req.body.CustomerId
+    quotation.tvaApplicable = req.body.tvaApplicable
     quotation = await quotation.save()
 		const all_invoice_items = quotation.InvoiceItems
-		const mutable_invoice_items = req.body.invoice_items
+		const mutable_invoice_items = req.body.InvoiceItems
 		const diff = mutable_invoice_items.filter(function(mutable_invoice_item) {
 			return !all_invoice_items.some(function(initial_invoice_item) {
 				return initial_invoice_item.id == mutable_invoice_item.id
@@ -188,7 +190,8 @@ exports.convertToInvoice = async (req, res, next) => {
       address: quotation.address,
       city: quotation.city,
       total: quotation.total,
-      CustomerId: quotation.CustomerId
+      CustomerId: quotation.CustomerId,
+      tvaApplicable: quotation.tvaApplicable
     }, { include: Invoice.InvoiceItems })
 
     const createInvoiceItemsPromises = [];
@@ -211,10 +214,8 @@ exports.convertToInvoice = async (req, res, next) => {
 
 exports.cautionPaid = async (req, res, next) => {
   const id = req.params.id
-  console.log(req.params)
   try {
     const quotation = await Quotation.findByPk(id)
-    console.log(quotation)
     if (!quotation) {
       const error = new Error('Quotation not found.')
       error.statusCode = 404

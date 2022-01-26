@@ -13,7 +13,8 @@ module.exports = (sequelize, DataTypes) => {
   Revenu.init({
     total: DataTypes.FLOAT,
     pro: DataTypes.FLOAT,
-    perso: DataTypes.FLOAT
+    perso: DataTypes.FLOAT,
+    taxPercentage: DataTypes.FLOAT
   }, {
     sequelize,
     modelName: 'Revenu',

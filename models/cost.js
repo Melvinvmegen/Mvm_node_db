@@ -9,7 +9,8 @@ module.exports = (sequelize, DataTypes) => {
   };
   Cost.init({
     name: DataTypes.STRING,
-    total: DataTypes.FLOAT
+    total: DataTypes.FLOAT,
+    tvaAmount: DataTypes.FLOAT
   }, {
     sequelize,
     modelName: 'Cost',
