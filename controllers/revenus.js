@@ -1,7 +1,7 @@
 const { validationResult, Result } = require('express-validator')
 const Sequelize = require('sequelize');
 const db = require("../models/index");
-const { Revenu, Invoice, Credit, Cost, Quotation } = db
+const { Revenu, Invoice, Credit, Cost, Quotation, Transaction } = db
 
 exports.getRevenus = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -13,7 +13,7 @@ exports.getRevenus = async (req, res, next) => {
     offset, 
     where: [],
     distinct: true,
-    include: [Invoice, Credit, Cost, Quotation],
+    include: [Invoice, Credit, Cost, Quotation, Transaction],
     order: [
       ['createdAt', 'DESC'],
     ]
@@ -158,16 +158,15 @@ exports.updateRevenu = async (req, res, next) => {
   }
 }
 
-exports.showRevenu = (req, res, next) => {
-  const id = req.params.id
-  Revenu.findByPk(id, { include: [Invoice, Credit, Cost, Quotation] } )
-  .then(revenu => {
-    if (!revenu) {
-      const error = new Error('Revenu not found.')
-      error.statusCode = 404
-      next(error)
-    }
+exports.showRevenu = async (req, res, next) => {
+  const id = req.params.id,
+  revenu = await Revenu.findByPk(id, { include: [Invoice, Credit, Cost, Quotation, Transaction] } )
+  try {
     res.status(200).json(revenu)
-  })
-  .catch(err => console.log(err))
+  } catch (error) {
+    if (!error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  }
 }

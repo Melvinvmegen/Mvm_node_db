@@ -2,15 +2,17 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Crypto extends Model {}
+  class Crypto extends Model {
+    static associate(models) {
+      this.hasMany(models.Transaction);
+    }
+  }
   Crypto.init({
-    buyingDate: DataTypes.DATE,
     name: DataTypes.STRING,
+    category: DataTypes.STRING,
     price: DataTypes.FLOAT,
     pricePurchase: DataTypes.FLOAT,
-    quantityPurchase: DataTypes.FLOAT,
-    priceChange: DataTypes.FLOAT,
-    fees: DataTypes.FLOAT
+    priceChange: DataTypes.FLOAT
   }, {
     sequelize,
     modelName: 'Crypto'
