@@ -94,7 +94,7 @@ exports.createInvoice = async (req, res, next) => {
       paymentDate: req.body.paymentDate,
       CustomerId: req.body.CustomerId,
       RevenuId: req.body.revenuId,
-      InvoiceItems: req.body.invoice_items,
+      InvoiceItems: req.body.invoiceItems,
       tvaApplicable: req.body.tvaApplicable,
       totalTTC: req.body.totalTTC,
       tvaAmount: req.body.tvaAmount
@@ -132,7 +132,7 @@ exports.updateInvoice = async (req, res, next) => {
     invoice.tvaAmount = req.body.tvaAmount
     invoice = await invoice.save()
     const all_invoice_items = invoice.InvoiceItems
-    const mutable_invoice_items = req.body.invoice_items
+    const mutable_invoice_items = req.body.invoiceItems
     if (mutable_invoice_items) {
       const diff = mutable_invoice_items.filter(function(mutable_invoice_item) {
         return !all_invoice_items.some(function(initial_invoice_item) {

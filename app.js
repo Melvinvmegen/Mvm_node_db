@@ -41,7 +41,7 @@ cron.schedule('0 0 1 * *', function() {
   Revenu.create(({createdAt: new Date(), total: 0, pro: 0, perso: 0}))
 });
 
-db.sequelize.sync()
+db.sequelize.authenticate()
 .then(() => {
   app.listen(process.env.PORT || 8080)
 })

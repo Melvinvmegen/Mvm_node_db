@@ -92,8 +92,10 @@ exports.createQuotation = async (req, res, next) => {
       city: req.body.city,
       total: req.body.total,
       CustomerId: req.body.CustomerId,
-      InvoiceItems: req.body.invoice_items,
-      tvaApplicable: req.body.tvaApplicable
+      InvoiceItems: req.body.InvoiceItems,
+      tvaApplicable: req.body.tvaApplicable,
+      totalTTC: req.body.totalTTC,
+      tvaAmount: req.body.tvaAmount
     }, { include: InvoiceItem })
     res.status(201).json({ message: 'Quotation created successfully', quotation })
   } catch (error) {
@@ -121,7 +123,9 @@ exports.updateQuotation = async (req, res, next) => {
     quotation.total = req.body.total
     quotation.RevenuId = req.body.revenuId
     quotation.CustomerId = req.body.CustomerId
-    quotation.tvaApplicable = req.body.tvaApplicable
+    quotation.tvaApplicable = req.body.tvaApplicable,
+    quotation.totalTTC = req.body.totalTTC,
+    quotation.tvaAmount = req.body.tvaAmount
     quotation = await quotation.save()
 		const all_invoice_items = quotation.InvoiceItems
 		const mutable_invoice_items = req.body.InvoiceItems

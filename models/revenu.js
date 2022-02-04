@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       this.hasMany(models.Cost);
       this.hasMany(models.Credit);
       this.hasMany(models.Quotation);
+      this.hasMany(models.Transaction);
     }
   };
   Revenu.init({
