@@ -188,7 +188,7 @@ exports.updateCrypto = async (req, res, next) => {
     crypto = await crypto.save()
     crypto = await Crypto.findByPk(crypto.id, { include: Transaction })
 
-    res.status(201).json({ message: 'Crypto successfully updated', crypto })
+    return res.status(201).json({ message: 'Crypto successfully updated', crypto })
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
