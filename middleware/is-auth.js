@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken')
 const config = require('../config/auth.config.js')
 
 module.exports = (req, res, next) => {
+  if (req.path == '/login' || req.path == '/signup') return next();
   const token = req.headers.authorization
   if (!token) {
     const error = new Error('Not authenticated')

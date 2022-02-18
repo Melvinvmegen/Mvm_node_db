@@ -1,34 +1,33 @@
 const express = require('express');
 const { body } = require('express-validator')
-const isAuth = require('../middleware/is-auth')
 
 const QuotationController = require('../controllers/quotations');
 
 const router = express.Router();
 
 // GET /quotations
-router.get('/quotations', isAuth, QuotationController.getQuotations);
+router.get('/quotations', QuotationController.getQuotations);
 
 // POST /quotation
-router.post('/quotation', isAuth, [
+router.post('/quotation', [
   body('firstName').trim().isLength({min: 1}),
   body('lastName').trim().isLength({min: 1}),
   body('company').trim().isLength({min: 1}),
 ], QuotationController.createQuotation);
 
 // POST /quotation
-router.post('/convert_quotation/:id', isAuth, QuotationController.convertToInvoice);
+router.post('/convert_quotation/:id', QuotationController.convertToInvoice);
 
 // POST /quotation
-router.post('/quotation_caution_paid/:id', isAuth, QuotationController.cautionPaid);
+router.post('/quotation_caution_paid/:id', QuotationController.cautionPaid);
 
 // GET /quotation
-router.get('/quotation/:id', isAuth, QuotationController.showQuotation);
+router.get('/quotation/:id', QuotationController.showQuotation);
 
 // PUT /quotation
-router.put('/quotation/:id', isAuth, QuotationController.updateQuotation);
+router.put('/quotation/:id', QuotationController.updateQuotation);
 
 // DELETE /quotation
-router.delete('/quotation/:id', isAuth, QuotationController.deleteQuotation);
+router.delete('/quotation/:id', QuotationController.deleteQuotation);
 
 module.exports = router;
