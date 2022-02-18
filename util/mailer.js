@@ -2,7 +2,6 @@ const sendGridMail = require('@sendgrid/mail');
 sendGridMail.setApiKey(process.env.SENDGRID_API_KEY);
 const fs = require("fs");
 const { pdfGenerator } = require('./pdfGenerator')
-const path = require('path')
 
 exports.sendInvoice = async function (invoice) {
   const id = invoice.id

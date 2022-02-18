@@ -17,7 +17,6 @@ const express = require('express'),
 // patch express async error handling
 require("express-async-errors")
 
-// const isAuth = require('./middleware/is-auth')
 const Revenu = db.Revenu;
 
 // Init web server
