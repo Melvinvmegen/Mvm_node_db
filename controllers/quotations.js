@@ -1,40 +1,13 @@
 const { validationResult } = require('express-validator')
 const { pdfGenerator } = require('../util/pdfGenerator')
-const path = require('path')
-const Sequelize = require('sequelize');
 const db = require("../models/index");
 const { Quotation, Invoice, InvoiceItem } = db
+const { setFilters } = require('../util/filter')
+const { notFound, validationFailed, alreadyConverted } = require('../util/errorHandler')
+const { updateOrCreateChildItems } = require('../util/childItemsHandler')
 
 exports.getQuotations = async (req, res, next) => {
-  const Op = Sequelize.Op
-  const queryParams = req.query
-  const offset = +queryParams.currentPage > 1 ? (+queryParams.currentPage * +queryParams.perPage) - +queryParams.perPage : 0
-  const limit = queryParams.perPage
-  const options = { 
-    limit, 
-    offset, 
-    where: [],
-    distinct: true,
-    include: InvoiceItem,
-    order: [
-      ['createdAt', 'DESC'],
-    ]
-  }
-
-  if (queryParams.name) {
-    options.where.push({[Op.or]: [
-      { firstName: {[Op.iLike]: `%${queryParams.name}%`} },
-      { lastName: {[Op.iLike]: `%${queryParams.name}%`} }
-    ]})
-  }
-
-  if (queryParams.CustomerId) {
-    options.where.push({CustomerId: {[Op.eq]: +queryParams.CustomerId}})
-  }
-
-  if (queryParams.total) {
-    options.where.push({total: {[Op.eq]: +queryParams.total}})
-  }
+  const options = setFilters(req.query, InvoiceItem)
 
   try {
     const quotations = await Quotation.findAndCountAll(options)
@@ -53,14 +26,10 @@ exports.showQuotation = async (req, res, next) => {
 
   try {
     const quotation = await Quotation.findByPk(id, { include: InvoiceItem })
-    if (!quotation) {
-      const error = new Error('Quotation not found.')
-      error.statusCode = 404
-      next(error)
-    }
+    if (!quotation) notFound(next, 'Quotation')
     if (isPDF) {
       const quotationName = 'quotation-' + quotation.id + '.pdf'
-      const quotationPath = path.join('data', 'quotations', quotationName)
+
       res.setHeader('Content-Type', 'application/pdf')
       res.setHeader('Content-Disposition', `inline; filename="${quotationName}"`)
       let doc = pdfGenerator(quotation)
@@ -78,25 +47,9 @@ exports.showQuotation = async (req, res, next) => {
 
 exports.createQuotation = async (req, res, next) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const error = new Error('Validation failed.')
-    error.statusCode = 422
-    return next(error)
-  }
+  if (!errors.isEmpty()) validationFailed(next)
   try {
-    const quotation =  await Quotation.create({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      company: req.body.company,
-      address: req.body.address,
-      city: req.body.city,
-      total: req.body.total,
-      CustomerId: req.body.CustomerId,
-      InvoiceItems: req.body.InvoiceItems,
-      tvaApplicable: req.body.tvaApplicable,
-      totalTTC: req.body.totalTTC,
-      tvaAmount: req.body.tvaAmount
-    }, { include: InvoiceItem })
+    const quotation =  await Quotation.create(req.body, { include: InvoiceItem })
     res.status(201).json({ message: 'Quotation created successfully', quotation })
   } catch (error) {
     if (!error.statusCode) {
@@ -108,58 +61,14 @@ exports.createQuotation = async (req, res, next) => {
 
 exports.updateQuotation = async (req, res, next) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const error = new Error('Validation failed.')
-    error.statusCode = 422
-    return next(error)
-  }
+  if (!errors.isEmpty()) validationFailed(next)
   try {
+    const mutable_invoice_items = req.body.InvoiceItems
     let quotation = await Quotation.findByPk(req.params.id, { include: InvoiceItem })
-    quotation.firstName = req.body.firstName
-    quotation.lastName = req.body.lastName
-    quotation.company = req.body.company
-    quotation.address = req.body.address
-    quotation.city = req.body.city
-    quotation.total = req.body.total
-    quotation.RevenuId = req.body.revenuId
-    quotation.CustomerId = req.body.CustomerId
-    quotation.tvaApplicable = req.body.tvaApplicable,
-    quotation.totalTTC = req.body.totalTTC,
-    quotation.tvaAmount = req.body.tvaAmount
+    Object.keys(req.body).forEach((key) => quotation[key] = req.body[key])
     quotation = await quotation.save()
-		const all_invoice_items = quotation.InvoiceItems
-		const mutable_invoice_items = req.body.InvoiceItems
-		const diff = mutable_invoice_items.filter(function(mutable_invoice_item) {
-			return !all_invoice_items.some(function(initial_invoice_item) {
-				return initial_invoice_item.id == mutable_invoice_item.id
-			})
-		})
-    const included = mutable_invoice_items.filter(function(mutable_invoice_item) {
-			return all_invoice_items.some(function(initial_invoice_item) {
-				return initial_invoice_item.id == mutable_invoice_item.id
-			})
-		})
-    const createInvoiceItemsPromises = [];
-    diff.forEach(invoice_item => {
-      createInvoiceItemsPromises.push(InvoiceItem.create(invoice_item))
-    })
-    await Promise.all(createInvoiceItemsPromises)
-    const updateInvoiceItemsPromises = [];
+    if (mutable_invoice_items) await updateOrCreateChildItems(InvoiceItem, quotation.InvoiceItems, req.body.InvoiceItems)
 
-    included.forEach(invoice_item => {
-      InvoiceItem.findByPk(invoice_item.id).then(found_invoice_item => {
-        if (invoice_item._destroy) {
-          updateInvoiceItemsPromises.push(found_invoice_item.destroy())
-        } else {
-          found_invoice_item.quantity = invoice_item.quantity,
-          found_invoice_item.unit = invoice_item.unit,
-          found_invoice_item.total = invoice_item.total
-          updateInvoiceItemsPromises.push(found_invoice_item.save())
-        }
-      })
-    })
-
-    await Promise.all(updateInvoiceItemsPromises)
     quotation = await quotation.reload()
     quotation = await quotation.save()
     quotation = await Quotation.findByPk(quotation.id, { include: InvoiceItem })
@@ -173,31 +82,12 @@ exports.updateQuotation = async (req, res, next) => {
 }
 
 exports.convertToInvoice = async (req, res, next) => {
-  const id = req.params.id
   try {
-    const quotation = await Quotation.findByPk(id, { include: InvoiceItem })
-    if (!quotation) {
-      const error = new Error('Quotation not found.')
-      error.statusCode = 404
-      return next(error)
-    }
-    if (quotation.InvoiceId) {
-      const error = new Error('Quotation already converted.')
-      error.statusCode = 403
-      return next(error)
-    }
+    const quotation = await Quotation.findByPk(req.params.id, { include: InvoiceItem })
+    if (!quotation) notFound(next, 'Quotation')
+    if (quotation.InvoiceId) alreadyConverted()
 
-    const invoice = await Invoice.create({
-      firstName: quotation.firstName,
-      lastName: quotation.lastName,
-      company: quotation.company,
-      address: quotation.address,
-      city: quotation.city,
-      total: quotation.total,
-      CustomerId: quotation.CustomerId,
-      tvaApplicable: quotation.tvaApplicable
-    }, { include: Invoice.InvoiceItems })
-
+    const invoice = await Invoice.create(quotation, { include: Invoice.InvoiceItems })
     const createInvoiceItemsPromises = [];
     quotation.InvoiceItems.forEach(invoice_item => {
       invoice_item.InvoiceId = invoice.id
@@ -217,19 +107,11 @@ exports.convertToInvoice = async (req, res, next) => {
 }
 
 exports.cautionPaid = async (req, res, next) => {
-  const id = req.params.id
   try {
-    const quotation = await Quotation.findByPk(id)
-    if (!quotation) {
-      const error = new Error('Quotation not found.')
-      error.statusCode = 404
-      return next(error)
-    }
-    if (quotation.cautionPaid) {
-      const error = new Error('Quotation already paid.')
-      error.statusCode = 403
-      return next(error)
-    }
+    const quotation = await Quotation.findByPk(req.params.id)
+    if (!quotation) notFound(next, 'Quotation')
+    if (quotation.cautionPaid) alreadyError(next, 'Quotation already paid.')
+
     if (quotation.RevenuId) {
       quotation.cautionPaid = true
       await quotation.save()
@@ -248,16 +130,11 @@ exports.cautionPaid = async (req, res, next) => {
   }
 }
 
-
 exports.deleteQuotation = async (req, res, next) => {
   const id = req.params.id
   try {
     const quotation = await Quotation.findByPk(id)
-    if (!quotation) {
-      const error = new Error('Quotation not found.')
-      error.statusCode = 404
-      return next(error)
-    }
+    if (!quotation) notFound(next, 'Quotation')
     await quotation.destroy()
     res.status(200).json({message: 'Quotation successfully destroyed'})
   } catch (error) {
