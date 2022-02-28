@@ -2,14 +2,17 @@ const db = require('../models/index');
 const { Crypto, Credit, Revenu, Transaction } = db
 const axios = require('axios').default;
 const Sequelize = require('sequelize');
+const { getOrSetCache } = require('../util/cacheManager')
 
 // GET /cryptos
 exports.getCryptos = async (req, res, next) => {
   try {
-    const cryptos = await Crypto.findAll({
-      include: Transaction
+    const cryptos = await getOrSetCache('cryptos', async () => {
+      return await Crypto.findAll({
+        include: Transaction
+      })
     })
-    res.status(200).json(cryptos)
+    return res.status(200).json(cryptos)
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
@@ -106,15 +109,15 @@ exports.updateCrypto = async (req, res, next) => {
     const totalTransactions = req.body.Transactions.map(transaction => transaction.price * transaction.quantity).reduce((sum, item) => sum + item, 0)
     const totalQuantityTransactions = req.body.Transactions.map(transaction => transaction.quantity).reduce((sum, item) => sum + item, 0)
     let crypto = await Crypto.findByPk(req.params.id, { include: Transaction })
-    buyingDate = req.body.buyingDate
-    crypto.name = req.body.name
-    crypto.category = req.body.category
+    Object.keys(req.body).forEach((key) => crypto[key] = req.body[key])
+
     crypto.pricePurchase = totalTransactions / totalQuantityTransactions
     crypto.price = req.body.price || values.price
     crypto.priceChange = values.percent_change_30d || 0
     crypto = await crypto.save()
     const all_transactions = crypto.Transactions
     const mutable_transactions = req.body.Transactions
+
     if (mutable_transactions) {
       const diff = mutable_transactions.filter(function(mutable_transaction) {
         return !all_transactions.some(function(initial_transaction) {
@@ -155,12 +158,7 @@ exports.updateCrypto = async (req, res, next) => {
           if (transaction._destroy) {
             updateTransactionsPromises.push(found_transaction.destroy())
           } else {
-            found_transaction.buyingDate = transaction.buyingDate
-            found_transaction.exchange = transaction.exchange
-            found_transaction.price = transaction.price
-            found_transaction.quantity = transaction.quantity
-            found_transaction.fees = transaction.fees
-            found_transaction.total = transaction.total 
+            Object.keys(transaction).forEach((key) => found_transaction[key] = transaction[key])
             const buyingDate = found_transaction.buyingDate
             const initialDate = new Date(buyingDate),
             firstDay = new Date(initialDate.getFullYear(), initialDate.getMonth()),

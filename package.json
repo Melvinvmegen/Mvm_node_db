@@ -6,7 +6,8 @@
   "scripts": {
     "test": "test",
     "dev": "nodemon app.js --trace-sync-io",
-    "console": "node --experimental-repl-await console.js"
+    "console": "node --experimental-repl-await console.js",
+    "redis": "redis-server --port 6360"
   },
   "keywords": [
     "NodeJs",
@@ -32,6 +33,7 @@
     "pdfkit": "^0.12.3",
     "pg": "^8.7.1",
     "pg-hstore": "^2.3.4",
+    "redis": "3.0.2",
     "sequelize": "^6.6.5",
     "sequelize-cli": "^6.2.0",
     "umzug": "^3.0.0"

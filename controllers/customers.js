@@ -3,14 +3,15 @@ const db = require("../models/index");
 const { Customer, Invoice } = db
 const { setFilters } = require('../util/filter')
 const { notFound, validationFailed } = require('../util/errorHandler')
+const { getOrSetCache } = require('../util/cacheManager')
 
 exports.getCustomers = async (req, res, next) => {
   const options = setFilters(req.query, Invoice)
-
   try {
-    const customers = await Customer.findAndCountAll(options)
-    res.status(200).json(customers)
-
+    const customers = await getOrSetCache('customers', async () => {
+      return await Customer.findAndCountAll(options)
+    })
+    return res.status(200).json(customers)
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
@@ -21,10 +22,15 @@ exports.getCustomers = async (req, res, next) => {
 
 exports.showCustomer = async (req, res, next) => {
   try {
-    const customer = await Customer.findByPk(req.params.id)
-    if (!customer) {
-      notFound(next, 'Customer')
-    }
+    const id = req.params.id
+    const customer = await getOrSetCache(`customer_${id}`, async () => {
+      const data = await Customer.findByPk(id)
+      if (!data) {
+        notFound(next, 'Customer')
+      }
+      return data
+    })
+
     res.status(200).json(customer)
   } catch (error) {
     if (!error.statusCode) {

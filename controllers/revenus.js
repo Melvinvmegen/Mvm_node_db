@@ -2,6 +2,7 @@ const Sequelize = require('sequelize');
 const db = require("../models/index");
 const { Revenu, Invoice, Credit, Cost, Quotation, Transaction } = db
 const { updateOrCreateChildItems } = require('../util/childItemsHandler')
+const { getOrSetCache } = require('../util/cacheManager')
 
 exports.getRevenus = async (req, res, next) => {
   const Op = Sequelize.Op
@@ -35,8 +36,29 @@ exports.getRevenus = async (req, res, next) => {
   }
 
   try {
-    const revenus = await Revenu.findAndCountAll(options)
-    res.status(200).json(revenus)
+    const revenus = await getOrSetCache('revenus', async () => {
+      return await Revenu.findAndCountAll(options)
+    })
+    return res.status(200).json(revenus)
+  } catch (error) {
+    if (!error.statusCode) {
+      error.statusCode = 500
+    }
+    next(error)
+  }
+}
+
+exports.showRevenu = async (req, res, next) => {
+  try {
+    const id = req.params.id
+    const revenu = await getOrSetCache(`revenu_${id}`, async () => {
+      const data = await Revenu.findByPk(id, { include: [Invoice, Credit, Cost, Quotation, Transaction] } )
+      if (!data) {
+        notFound(next, 'Customer')
+      }
+      return data
+    })
+    res.status(200).json(revenu)
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
@@ -72,18 +94,6 @@ exports.updateRevenu = async (req, res, next) => {
     revenu.taxPercentage = req.body.taxPercentage
     revenu = await revenu.save()
     res.status(201).json({ message: 'Revenu updated successfully', revenu })
-  } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
-  }
-}
-
-exports.showRevenu = async (req, res, next) => {
-  const revenu = await Revenu.findByPk(req.params.id, { include: [Invoice, Credit, Cost, Quotation, Transaction] } )
-  try {
-    res.status(200).json(revenu)
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500

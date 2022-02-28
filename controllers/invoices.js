@@ -11,7 +11,9 @@ exports.getInvoices = async (req, res, next) => {
   const options = setFilters(req.query, InvoiceItem)
 
   try {
-    const invoices = await Invoice.findAndCountAll(options)
+    const invoices = await getOrSetCache(`invoices_customer_${req.query.CustomerId}`, async () => {
+      return await Invoice.findAndCountAll(options)
+    })
     res.status(200).json(invoices)
   } catch (error) {
     if (!error.statusCode) {

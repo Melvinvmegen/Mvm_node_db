@@ -10,7 +10,9 @@ exports.getQuotations = async (req, res, next) => {
   const options = setFilters(req.query, InvoiceItem)
 
   try {
-    const quotations = await Quotation.findAndCountAll(options)
+    const quotations = await getOrSetCache(`quotations_customer_${req.query.CustomerId}`, async () => {
+      return await Quotation.findAndCountAll(options)
+    })
     res.status(200).json(quotations)
   } catch (error) {
     if (!error.statusCode) {
