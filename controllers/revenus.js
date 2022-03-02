@@ -5,11 +5,12 @@ const { updateOrCreateChildItems } = require('../util/childItemsHandler')
 const { getOrSetCache } = require('../util/cacheManager')
 
 exports.getRevenus = async (req, res, next) => {
-  const Op = Sequelize.Op
-  const queryParams = req.query
-  const offset = +queryParams.currentPage > 1 ? (+queryParams.currentPage * +queryParams.perPage) - +queryParams.perPage : 0
-  const limit = queryParams.perPage
-  const options = { 
+  const force = (req.query.force === 'true'),
+        Op = Sequelize.Op,
+        queryParams = req.query,
+        offset = +queryParams.currentPage > 1 ? (+queryParams.currentPage * +queryParams.perPage) - +queryParams.perPage : 0,
+        limit = queryParams.perPage,
+  options = { 
     limit, 
     offset, 
     where: [],
@@ -21,11 +22,11 @@ exports.getRevenus = async (req, res, next) => {
   }
 
   if (queryParams.month) {
-    const arrDate = queryParams.month.split('/')
-    const year = arrDate[1]
-    const month = arrDate[0] - 1
-    const firstDay = new Date(+year, +month)
-    const lastDay = new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, 0)
+    const arrDate = queryParams.month.split('/'),
+          year = arrDate[1],
+          month = arrDate[0] - 1,
+          firstDay = new Date(+year, +month),
+          lastDay = new Date(firstDay.getFullYear(), firstDay.getMonth() + 1, 0)
   
     options.where.push( { 
       createdAt: {
@@ -38,7 +39,7 @@ exports.getRevenus = async (req, res, next) => {
   try {
     const revenus = await getOrSetCache('revenus', async () => {
       return await Revenu.findAndCountAll(options)
-    })
+    }, force)
     return res.status(200).json(revenus)
   } catch (error) {
     if (!error.statusCode) {
@@ -53,9 +54,7 @@ exports.showRevenu = async (req, res, next) => {
     const id = req.params.id
     const revenu = await getOrSetCache(`revenu_${id}`, async () => {
       const data = await Revenu.findByPk(id, { include: [Invoice, Credit, Cost, Quotation, Transaction] } )
-      if (!data) {
-        notFound(next, 'Customer')
-      }
+      if (!data) return notFound(next, 'Customer')
       return data
     })
     res.status(200).json(revenu)
@@ -93,6 +92,8 @@ exports.updateRevenu = async (req, res, next) => {
     revenu.total = revenu_total;
     revenu.taxPercentage = req.body.taxPercentage
     revenu = await revenu.save()
+    // Invalidate the cache every time we change something so that the front is always up to date
+    await invalidateCache('revenus')
     res.status(201).json({ message: 'Revenu updated successfully', revenu })
   } catch (error) {
     if (!error.statusCode) {

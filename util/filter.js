@@ -16,7 +16,8 @@ exports.setFilters = function (queryParams, filteredModel) {
   }
 
   Object.keys(queryParams).forEach(function (key) {
-    if (key === 'currentPage' || key === 'perPage') return
+    // We filter out every key which can be filtered by Sequelize
+    if (key === 'currentPage' || key === 'perPage' || key === 'force') return
     if (key === 'name') {
       options.where.push({[Op.or]: [
         { firstName: {[Op.iLike]: `%${queryParams[key]}%`} },

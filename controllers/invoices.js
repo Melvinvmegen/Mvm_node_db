@@ -8,12 +8,14 @@ const { notFound, validationFailed } = require('../util/errorHandler')
 const { updateOrCreateChildItems } = require('../util/childItemsHandler')
 
 exports.getInvoices = async (req, res, next) => {
+  // Force allows filtering by bypassing the cache without invalidating it
+  const force = (req.query.force === 'true')
   const options = setFilters(req.query, InvoiceItem)
 
   try {
     const invoices = await getOrSetCache(`invoices_customer_${req.query.CustomerId}`, async () => {
       return await Invoice.findAndCountAll(options)
-    })
+    }, force)
     res.status(200).json(invoices)
   } catch (error) {
     if (!error.statusCode) {
@@ -29,7 +31,7 @@ exports.showInvoice = async (req, res, next) => {
 
   try {
     const invoice = await Invoice.findByPk(id, { include: InvoiceItem } )
-    if (!invoice) notFound(next, 'Invoice')
+    if (!invoice) return notFound(next, 'Invoice')
     if (isPDF) {
       const invoiceName = 'invoice-' + id + '.pdf'
     
@@ -50,9 +52,11 @@ exports.showInvoice = async (req, res, next) => {
 
 exports.createInvoice = async (req, res, next) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) validationFailed(next)
+  if (!errors.isEmpty()) return validationFailed(next)
   try {
     const invoice = await Invoice.create(req.body, { include: InvoiceItem })
+    // Invalidate the cache every time we change something so that the front is always up to date
+    await invalidateCache(`invoices_customer_${invoice.CustomerId}`)
     res.status(201).json({ message: 'Invoice created successfully', invoice})
   } catch (error) {
     if (!error.statusCode) {
@@ -64,7 +68,7 @@ exports.createInvoice = async (req, res, next) => {
 
 exports.updateInvoice = async (req, res, next) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) validationFailed(next)
+  if (!errors.isEmpty()) return validationFailed(next)
   try {
     const mutable_invoice_items = req.body.InvoiceItems
     let invoice = await Invoice.findByPk(req.params.id, { include: InvoiceItem })
@@ -75,6 +79,8 @@ exports.updateInvoice = async (req, res, next) => {
     invoice = await invoice.reload()
     invoice = await invoice.save()
     invoice = await Invoice.findByPk(invoice.id, { include: InvoiceItem })
+    // Invalidate the cache every time we change something so that the front is always up to date
+    await invalidateCache(`invoices_customer_${invoice.CustomerId}`)
     res.status(201).json({ message: 'Invoice updated successfully', invoice })
   } catch (error) {
     if (!error.statusCode) {
@@ -101,8 +107,10 @@ exports.deleteInvoice = async (req, res, next) => {
   const id = req.params.id
   try {
     const invoice = await Invoice.findByPk(id)
-    if (!invoice) notFound(next, 'Invoice')
+    if (!invoice) return notFound(next, 'Invoice')
     await invoice.destroy()
+    // Invalidate the cache every time we change something so that the front is always up to date
+    await invalidateCache(`invoices_customer_${invoice.CustomerId}`)
     res.status(200).json({message: 'Invoice successfully destroyed'})
   } catch (error) {
     if (!error.statusCode) {

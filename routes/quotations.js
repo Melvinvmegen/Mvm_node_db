@@ -18,9 +18,6 @@ router.post('/quotation', [
 // POST /quotation
 router.post('/convert_quotation/:id', QuotationController.convertToInvoice);
 
-// POST /quotation
-router.post('/quotation_caution_paid/:id', QuotationController.cautionPaid);
-
 // GET /quotation
 router.get('/quotation/:id', QuotationController.showQuotation);
 
