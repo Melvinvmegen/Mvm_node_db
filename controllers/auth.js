@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const db = require("../models/index");
 const { User, RefreshToken } = db
-const config = require("../config/auth.config.js");
 
 exports.signUp = async (req, res, next) => {
   const errors =  validationResult(req)
@@ -53,12 +52,11 @@ exports.login = async (req, res, next) => {
       return next(error)
     }
     const token = jwt.sign(
-      { email: loadedUser.email, userId: loadedUser.id }, config.secret, 
-      { expiresIn: config.jwtExpiration }
+      { email: loadedUser.email, userId: loadedUser.id }, process.env.JWT_SECRET, 
+      { expiresIn: +process.env.JWT_EXPIRATION }
     )
 
     let refreshToken = await RefreshToken.createToken(user);
-
     res.status(200).json({message: 'Successfully signed in', token: token, refreshToken: refreshToken, userId: loadedUser.id})
   } catch (error) {
     if (!error.statusCode) {
@@ -90,13 +88,13 @@ exports.refreshToken = async (req, res, next) => {
       RefreshToken.destroy({ where: { id: refreshToken.id } });
       const error = new Error('Refresh token was expired. Please login')
       error.statusCode = 403
-      next(error)
-      return
+      return next(error)
     }
     const user = await refreshToken.getUser();
-    let newAccessToken = jwt.sign({ id: user.id }, config.secret, {
-      expiresIn: config.jwtExpiration,
-    });
+    const newAccessToken = jwt.sign(
+      { email: user.email, userId: user.id }, process.env.JWT_SECRET, 
+      { expiresIn: +process.env.JWT_EXPIRATION }
+    )
 
     return res.status(200).json({
       accessToken: newAccessToken,
