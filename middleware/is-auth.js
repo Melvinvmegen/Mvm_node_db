@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken')
-const config = require('../config/auth.config.js')
 
 module.exports = (req, res, next) => {
   if (req.path == '/login' || req.path == '/signup') return next();
@@ -11,7 +10,7 @@ module.exports = (req, res, next) => {
   } 
   let decodedToken;
   try {
-    decodedToken = jwt.verify(token, config.secret)
+    decodedToken = jwt.verify(token, process.env.JWT_SECRET)
   } catch (error) {
     error.statusCode = 401
     return next(error)
@@ -22,7 +21,6 @@ module.exports = (req, res, next) => {
     error.statusCode = 401
     return next(error);
   }
-
   req.userId = decodedToken.userId
   next()
 }

@@ -21,21 +21,35 @@ redisClient.on("error", function (err) {
 
 getOrSetCache = (key, cb, force = false) => {
   return new Promise((resolve, reject) => {
-    if (force) redisClient.del(key)
     redisClient.get(key, async (err, result) => {
       if (err) reject(err)
-      if (result) {
+      if (result && !force) {
         console.log(
-          chalk.green('CACHE HIT')
+          chalk.green(key, 'CACHE HIT')
         )
         return resolve(JSON.parse(result))
       } else {
+        const redisKey = force ? `filtered_${key}` : key
         console.log(
-          chalk.yellow('CACHE MISS')
+          chalk.yellow(redisKey, 'CACHE MISS')
         )
         const freshData = await cb()
-        redisClient.setex(key, 3600, JSON.stringify(freshData))
+        redisClient.setex(redisKey, 3600, JSON.stringify(freshData))
         return resolve(freshData)
+      }
+    })
+  })
+}
+
+invalidateCache = (key) => {
+  return new Promise((resolve, reject) => {
+    redisClient.del(key, async (err, result) => {
+      if (err) reject(err)
+      if (result) {
+        console.log(
+          chalk.green(key, 'CACHE INVALIDATED')
+        )
+        return resolve(JSON.parse(result))
       }
     })
   })

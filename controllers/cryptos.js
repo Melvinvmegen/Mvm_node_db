@@ -7,11 +7,7 @@ const { getOrSetCache } = require('../util/cacheManager')
 // GET /cryptos
 exports.getCryptos = async (req, res, next) => {
   try {
-    const cryptos = await getOrSetCache('cryptos', async () => {
-      return await Crypto.findAll({
-        include: Transaction
-      })
-    })
+    const cryptos = await Crypto.findAll({ include: Transaction })
     return res.status(200).json(cryptos)
   } catch (error) {
     if (!error.statusCode) {
@@ -250,6 +246,8 @@ exports.checkoutCrypto = async (req, res, next) => {
 
     crypto.price_purchase = 0
     await crypto.save()
+
+
     res.status(201).json({ message: 'Crypto successfully checkout', credit })
   } catch (error) {
     if (!error.statusCode) {

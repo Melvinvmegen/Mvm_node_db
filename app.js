@@ -72,9 +72,9 @@ app.use((err, req, res, next) => {
         },
       });
       break;
-    case "UnauthorizedError":
+    case "TokenExpiredError":
       console.debug(
-        chalk.yellow("UnauthorizedError"),
+        chalk.yellow("TokenExpiredError"),
         chalk.yellow(err.message)
       );
       res.status(err.status || 401);

@@ -7,12 +7,14 @@ const { notFound, validationFailed, alreadyError } = require('../util/errorHandl
 const { updateOrCreateChildItems } = require('../util/childItemsHandler')
 
 exports.getQuotations = async (req, res, next) => {
+  const force = (req.query.force === 'true')
+  // Force allows filtering by bypassing the cache without invalidating it
   const options = setFilters(req.query, InvoiceItem)
 
   try {
     const quotations = await getOrSetCache(`quotations_customer_${req.query.CustomerId}`, async () => {
       return await Quotation.findAndCountAll(options)
-    })
+    }, force)
     res.status(200).json(quotations)
   } catch (error) {
     if (!error.statusCode) {
@@ -28,7 +30,7 @@ exports.showQuotation = async (req, res, next) => {
 
   try {
     const quotation = await Quotation.findByPk(id, { include: InvoiceItem })
-    if (!quotation) notFound(next, 'Quotation')
+    if (!quotation) return notFound(next, 'Quotation')
     if (isPDF) {
       const quotationName = 'quotation-' + quotation.id + '.pdf'
 
@@ -52,6 +54,8 @@ exports.createQuotation = async (req, res, next) => {
   if (!errors.isEmpty()) validationFailed(next)
   try {
     const quotation =  await Quotation.create(req.body, { include: InvoiceItem })
+    // Invalidate the cache every time we change something so that the front is always up to date
+    await invalidateCache(`quotations_customer_${quotation.CustomerId}`)
     res.status(201).json({ message: 'Quotation created successfully', quotation })
   } catch (error) {
     if (!error.statusCode) {
@@ -63,7 +67,7 @@ exports.createQuotation = async (req, res, next) => {
 
 exports.updateQuotation = async (req, res, next) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) validationFailed(next)
+  if (!errors.isEmpty()) return validationFailed(next)
   try {
     const mutable_invoice_items = req.body.InvoiceItems
     let quotation = await Quotation.findByPk(req.params.id, { include: InvoiceItem })
@@ -74,6 +78,8 @@ exports.updateQuotation = async (req, res, next) => {
     quotation = await quotation.reload()
     quotation = await quotation.save()
     quotation = await Quotation.findByPk(quotation.id, { include: InvoiceItem })
+    // Invalidate the cache every time we change something so that the front is always up to date
+    await invalidateCache(`quotations_customer_${quotation.CustomerId}`)
     res.status(201).json({ message: 'Quotation updated successfully', quotation })
   } catch (error) {
     if (!error.statusCode) {
@@ -86,8 +92,8 @@ exports.updateQuotation = async (req, res, next) => {
 exports.convertToInvoice = async (req, res, next) => {
   try {
     const quotation = await Quotation.findByPk(req.params.id, { include: InvoiceItem })
-    if (!quotation) notFound(next, 'Quotation')
-    if (quotation.InvoiceId) alreadyError()
+    if (!quotation) return notFound(next, 'Quotation')
+    if (quotation.InvoiceId) return alreadyError(next, 'Quotation already converted.')
     const quotationValues = Object.fromEntries(Object.entries(quotation.dataValues).filter(([key]) => key !== 'id'))
     const invoice = await Invoice.create(quotationValues, { include: Invoice.InvoiceItems })
     const createInvoiceItemsPromises = [];
@@ -99,31 +105,10 @@ exports.convertToInvoice = async (req, res, next) => {
 
     quotation.InvoiceId = invoice.id
     await quotation.save()
+    // Invalidate the cache every time we change something so that the front is always up to date
+    await invalidateCache(`quotations_customer_${quotation.CustomerId}`)
+    await invalidateCache(`invoices_customer_${invoice.CustomerId}`)
     res.status(200).json({ invoice: invoice, message: 'Quotation successfully converted' }) 
-  } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
-  }
-}
-
-exports.cautionPaid = async (req, res, next) => {
-  try {
-    const quotation = await Quotation.findByPk(req.params.id)
-    if (!quotation) notFound(next, 'Quotation')
-    if (quotation.cautionPaid) alreadyError(next, 'Quotation already paid.')
-
-    if (quotation.RevenuId) {
-      quotation.cautionPaid = true
-      await quotation.save()
-      const revenu = await quotation.getRevenu()
-      const caution = quotation.total * 0.3
-      revenu.pro += caution
-      revenu.total += caution
-      await revenu.save()
-      res.status(201).json({ message: 'Quotation paid successfully', quotation })
-    } 
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500
@@ -136,8 +121,9 @@ exports.deleteQuotation = async (req, res, next) => {
   const id = req.params.id
   try {
     const quotation = await Quotation.findByPk(id)
-    if (!quotation) notFound(next, 'Quotation')
+    if (!quotation) return notFound(next, 'Quotation')
     await quotation.destroy()
+    await invalidateCache(`quotations_customer_${quotation.CustomerId}`)
     res.status(200).json({message: 'Quotation successfully destroyed'})
   } catch (error) {
     if (!error.statusCode) {
