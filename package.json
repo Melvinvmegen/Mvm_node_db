@@ -7,7 +7,8 @@
     "test": "test",
     "dev": "nodemon app.js --trace-sync-io",
     "console": "node --experimental-repl-await console.js",
-    "redis": "redis-server --port 6360"
+    "redis": "redis-server --port 6360",
+    "start": "node app.js"
   },
   "keywords": [
     "NodeJs",

@@ -15,7 +15,7 @@ redisClient.on("connected", function () {
 redisClient.on("error", function (err) {
   console.debug(
     chalk.red("Redis error :"),
-    chalk.red(e)
+    chalk.red(err)
   )
 });
 
