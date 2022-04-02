@@ -49,10 +49,10 @@ glob
 
 // Error handler
 app.use((err, req, res, next) => {
-  switch (err.name) {
-    case "AppError":
+  switch (err.statusCode) {
+    case 404:
       console.debug(
-        chalk.yellow("AppError"),
+        chalk.yellow("NotFoundError"),
         chalk.yellow(err.message),
         "at .../" +
           err.stack
@@ -62,7 +62,7 @@ app.use((err, req, res, next) => {
             .join("/")
             .slice(0, -1)
       );
-      res.status(err.status || 400);
+      res.status(err.statusCode || 404);
       res.json({
         error: {
           name: err.name,
@@ -72,36 +72,14 @@ app.use((err, req, res, next) => {
         },
       });
       break;
-    case "TokenExpiredError":
+    case 401:
       console.debug(
         chalk.yellow("TokenExpiredError"),
         chalk.yellow(err.message)
       );
-      res.status(err.status || 401);
+      res.status(err.statusCode || 401);
       res.json({
         error: err,
-      });
-      break;
-    case "SequelizeValidationError":
-      if (err.errors) {
-        err.errors.forEach((e) =>
-          console.debug(
-            chalk.yellow("ValidationError"),
-            chalk.yellow(e.message)
-          )
-        );
-      }
-      res.status(err.status || 400);
-      res.json({
-        error: err.errors
-          ? err.errors.map((e) => ({
-              name: err.name,
-              message: e.message,
-              code: e.validatorKey,
-              field: e.path,
-              params: e.validatorArgs,
-            }))
-          : err,
       });
       break;
     default:
@@ -110,12 +88,12 @@ app.use((err, req, res, next) => {
         chalk.red(err.message),
         err
       );
-      res.status(err.status || 500);
+      res.status(err.statusCode || 500);
       res.json({
         error: err,
       });
   }
-  next();
+  return next();
 });
 
 cron.schedule('0 0 1 * *', function() {

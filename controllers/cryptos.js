@@ -1,19 +1,15 @@
 const db = require('../models/index');
-const { Crypto, Credit, Revenu, Transaction } = db
+const { Crypto, Credit, Revenu, Transaction, Cost } = db
 const axios = require('axios').default;
 const Sequelize = require('sequelize');
-const { getOrSetCache } = require('../util/cacheManager')
 
 // GET /cryptos
 exports.getCryptos = async (req, res, next) => {
   try {
     const cryptos = await Crypto.findAll({ include: Transaction })
-    return res.status(200).json(cryptos)
+    res.status(200).json(cryptos)
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -74,10 +70,7 @@ exports.createCrypto = async (req, res, next) => {
     await Promise.all(updateTransactionRevenus)
     res.status(201).json({ message: 'Crypto created successfully', crypto })
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 };
 
@@ -105,24 +98,18 @@ exports.updateCrypto = async (req, res, next) => {
     const totalTransactions = req.body.Transactions.map(transaction => transaction.price * transaction.quantity).reduce((sum, item) => sum + item, 0)
     const totalQuantityTransactions = req.body.Transactions.map(transaction => transaction.quantity).reduce((sum, item) => sum + item, 0)
     let crypto = await Crypto.findByPk(req.params.id, { include: Transaction })
-    Object.keys(req.body).forEach((key) => crypto[key] = req.body[key])
-
-    crypto.pricePurchase = totalTransactions / totalQuantityTransactions
-    crypto.price = req.body.price || values.price
-    crypto.priceChange = values.percent_change_30d || 0
-    crypto = await crypto.save()
     const all_transactions = crypto.Transactions
     const mutable_transactions = req.body.Transactions
 
     if (mutable_transactions) {
       const diff = mutable_transactions.filter(function(mutable_transaction) {
         return !all_transactions.some(function(initial_transaction) {
-          return initial_transaction.id == mutable_transaction.id
+          return initial_transaction.id === mutable_transaction.id
         })
       })
       const included = mutable_transactions.filter(function(mutable_transaction) {
         return all_transactions.some(function(initial_transaction) {
-          return initial_transaction.id == mutable_transaction.id
+          return initial_transaction.id === mutable_transaction.id
         })
       })
       const createTransactionsPromises = [];
@@ -148,7 +135,6 @@ exports.updateCrypto = async (req, res, next) => {
     
       await Promise.all(createTransactionsPromises)
       const updateTransactionsPromises = [];
-  
       included.forEach(transaction => {
         Transaction.findByPk(transaction.id).then(found_transaction => {
           if (transaction._destroy) {
@@ -178,16 +164,15 @@ exports.updateCrypto = async (req, res, next) => {
       await Promise.all(updateTransactionsPromises)
     }
 
-    crypto = await crypto.reload()
-    crypto = await crypto.save()
-    crypto = await Crypto.findByPk(crypto.id, { include: Transaction })
+    Object.keys(req.body).forEach((key) => crypto[key] = req.body[key])
 
-    return res.status(201).json({ message: 'Crypto successfully updated', crypto })
+    crypto.pricePurchase = totalTransactions / totalQuantityTransactions
+    crypto.price = req.body.price || values.price
+    crypto.priceChange = values.percent_change_30d || 0
+    const updatedCrypto = await crypto.save()
+    res.status(201).json({ message: 'Crypto successfully updated', updatedCrypto })
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 };
 
@@ -225,10 +210,7 @@ exports.updateCryptos = async (req, res, next) => {
     await Promise.all(updateCryptoPromises)
     res.status(201).json({ message: 'Crypto successfully fetched', cryptos })
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 };
 
@@ -247,12 +229,21 @@ exports.checkoutCrypto = async (req, res, next) => {
     crypto.price_purchase = 0
     await crypto.save()
 
-
     res.status(201).json({ message: 'Crypto successfully checkout', credit })
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 };
+
+// DELETE /crypto/:id
+exports.deleteCrypto = async (req, res, next) => {
+  try {
+    const crypto = await Crypto.findByPk(req.params.id)
+    if (!crypto) return notFound(next, 'Crypto')
+    await crypto.destroy()
+    const cost = await Cost.create({name: 'Swapping fees', tvaAmount: 0, total: req.body.transaction_fees})
+    res.status(201).json({ message: 'Crypto successfully swapped', cost })
+  } catch (error) {
+    return next(error)
+  }
+}

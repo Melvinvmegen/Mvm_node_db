@@ -13,12 +13,9 @@ exports.getCustomers = async (req, res, next) => {
     const customers = await getOrSetCache('customers', async () => {
       return await Customer.findAndCountAll(options)
     }, force)
-    return res.status(200).json(customers)
+    res.status(200).json(customers)
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -33,10 +30,7 @@ exports.showCustomer = async (req, res, next) => {
 
     res.status(200).json(customer)
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -49,10 +43,7 @@ exports.createCustomer = async (req, res, next) => {
     await invalidateCache('customers')
     res.status(201).json({ message: 'Customer created successfully', customer })
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -62,15 +53,12 @@ exports.updateCustomer = async (req, res, next) => {
   try {
     let customer = await Customer.findByPk(req.params.id)
     Object.keys(req.body).forEach((key) => customer[key] = req.body[key])
-    customer = await customer.save()
+    const updateCustomer = await customer.save()
     // Invalidate the cache every time we change something so that the front is always up to date
     await invalidateCache('customers')
-    res.status(201).json({ message: 'Customer updated successfully', customer })
+    res.status(201).json({ message: 'Customer updated successfully', updateCustomer })
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -83,9 +71,6 @@ exports.deleteCustomer = async (req, res, next) => {
     await invalidateCache('customers')
     res.status(200).json({message: 'Customer successfully destroyed'})
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }

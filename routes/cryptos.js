@@ -12,10 +12,13 @@ router.post('/crypto', CryptoController.createCrypto);
 // PUT /crypto
 router.put('/crypto/:id', CryptoController.updateCrypto);
 
-// GET /crypto
-router.get('/updateCryptos', CryptoController.updateCryptos);
+// GET /update_cryptos
+router.get('/update_cryptos', CryptoController.updateCryptos);
 
-// PUT /crypto
+// PUT /checkout_crypto
 router.put('/checkout_crypto/:id', CryptoController.checkoutCrypto);
+
+// PUT /swap_crypto
+router.put('/swap_crypto/:id', [CryptoController.deleteCrypto, CryptoController.createCrypto]);
 
 module.exports = router;
