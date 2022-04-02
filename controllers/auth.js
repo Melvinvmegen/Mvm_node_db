@@ -29,22 +29,21 @@ exports.signUp = async (req, res, next) => {
     if (!error.statusCode) {
       error.statusCode = 500;
     }
-    next(error)
+    return next(error)
   }
 }
 
 exports.login = async (req, res, next) => {
   const email = req.body.email
   const password = req.body.password
-  let loadedUser;
+  let user;
   try {
-    const user = await User.findOne({ where: { email: email }})
+    user = await User.findOne({ where: { email: email }})
     if (!user) {
       const error = new Error('A user with this email could not be found !')
       error.statusCode = 404
       return next(error)
     }
-    loadedUser = user
     const isEqual = await bcrypt.compare(password, user.password)
     if (!isEqual) {
       const error = new Error("Email and password don't match!")
@@ -52,17 +51,17 @@ exports.login = async (req, res, next) => {
       return next(error)
     }
     const token = jwt.sign(
-      { email: loadedUser.email, userId: loadedUser.id }, process.env.JWT_SECRET, 
+      { email: user.email, userId: user.id }, process.env.JWT_SECRET, 
       { expiresIn: +process.env.JWT_EXPIRATION }
     )
 
     let refreshToken = await RefreshToken.createToken(user);
-    res.status(200).json({message: 'Successfully signed in', token: token, refreshToken: refreshToken, userId: loadedUser.id})
+    res.status(200).json({message: 'Successfully signed in', token: token, refreshToken: refreshToken, userId: user.id})
   } catch (error) {
     if (!error.statusCode) {
       error.statusCode = 500;
     }
-    next(error)
+    return next(error)
   }
 }
 
@@ -96,7 +95,7 @@ exports.refreshToken = async (req, res, next) => {
       { expiresIn: +process.env.JWT_EXPIRATION }
     )
 
-    return res.status(200).json({
+    res.status(200).json({
       accessToken: newAccessToken,
       refreshToken: refreshToken.token,
     });
@@ -104,6 +103,6 @@ exports.refreshToken = async (req, res, next) => {
     if (!error.statusCode) {
       error.statusCode = 500;
     }
-    next(error)
+    return next(error)
   }
 }

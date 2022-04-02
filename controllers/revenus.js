@@ -10,16 +10,16 @@ exports.getRevenus = async (req, res, next) => {
         queryParams = req.query,
         offset = +queryParams.currentPage > 1 ? (+queryParams.currentPage * +queryParams.perPage) - +queryParams.perPage : 0,
         limit = queryParams.perPage,
-  options = { 
-    limit, 
-    offset, 
-    where: [],
-    distinct: true,
-    include: [Invoice, Credit, Cost, Quotation, Transaction],
-    order: [
-      ['createdAt', 'DESC'],
-    ]
-  }
+        options = { 
+          limit, 
+          offset, 
+          where: [],
+          distinct: true,
+          include: [Invoice, Credit, Cost, Quotation, Transaction],
+          order: [
+            ['createdAt', 'DESC'],
+          ]
+        }
 
   if (queryParams.month) {
     const arrDate = queryParams.month.split('/'),
@@ -40,12 +40,9 @@ exports.getRevenus = async (req, res, next) => {
     const revenus = await getOrSetCache('revenus', async () => {
       return await Revenu.findAndCountAll(options)
     }, force)
-    return res.status(200).json(revenus)
+    res.status(200).json(revenus)
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -59,10 +56,7 @@ exports.showRevenu = async (req, res, next) => {
     })
     res.status(200).json(revenu)
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -73,10 +67,6 @@ exports.updateRevenu = async (req, res, next) => {
     const mutable_costs = req.body.Costs
     if (mutable_credits) await updateOrCreateChildItems(Credit, revenu.Credits, mutable_credits)
     if (mutable_costs) await updateOrCreateChildItems(Cost, revenu.Costs, mutable_costs)
-  
-    revenu = await revenu.reload()
-    revenu = await revenu.save()
-    revenu = await Revenu.findByPk(revenu.id, { include: [Credit, Cost, Invoice, Quotation] })
 
     let revenu_total = 0
     let revenu_pro = 0
@@ -86,19 +76,20 @@ exports.updateRevenu = async (req, res, next) => {
     if (revenu.Quotations) revenu.Quotations.forEach(quotation => revenu_pro += quotation.total * 0.3)
     if (revenu.Credits) revenu.Credits.forEach(credit => revenu_perso += credit.total)
 
+    Object.keys(req.body).forEach((key) => revenu[key] = req.body[key])
     revenu_total = revenu_pro + revenu_perso
     revenu.pro = revenu_pro
     revenu.perso = revenu_perso
     revenu.total = revenu_total;
     revenu.taxPercentage = req.body.taxPercentage
-    revenu = await revenu.save()
+    await revenu.save()
+    await revenu.reload()
+
     // Invalidate the cache every time we change something so that the front is always up to date
     await invalidateCache('revenus')
+    await invalidateCache(`revenu_${revenu.id}`)
     res.status(201).json({ message: 'Revenu updated successfully', revenu })
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }

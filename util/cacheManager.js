@@ -27,7 +27,7 @@ getOrSetCache = (key, cb, force = false) => {
         console.log(
           chalk.green(key, 'CACHE HIT')
         )
-        return resolve(JSON.parse(result))
+        resolve(JSON.parse(result))
       } else {
         const redisKey = force ? `filtered_${key}` : key
         console.log(
@@ -35,7 +35,7 @@ getOrSetCache = (key, cb, force = false) => {
         )
         const freshData = await cb()
         redisClient.setex(redisKey, 3600, JSON.stringify(freshData))
-        return resolve(freshData)
+        resolve(freshData)
       }
     })
   })
@@ -44,12 +44,16 @@ getOrSetCache = (key, cb, force = false) => {
 invalidateCache = (key) => {
   return new Promise((resolve, reject) => {
     redisClient.del(key, async (err, result) => {
-      if (err) reject(err)
-      if (result) {
+      if (err) {
+        reject(err)
+      } 
+      if (!result) {
+        reject('Cache not found')
+      } else {
         console.log(
           chalk.green(key, 'CACHE INVALIDATED')
         )
-        return resolve(JSON.parse(result))
+        resolve(JSON.parse(result))
       }
     })
   })

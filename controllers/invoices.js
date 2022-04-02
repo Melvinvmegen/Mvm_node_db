@@ -18,10 +18,7 @@ exports.getInvoices = async (req, res, next) => {
     }, force)
     res.status(200).json(invoices)
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -43,10 +40,7 @@ exports.showInvoice = async (req, res, next) => {
       res.status(200).json(invoice)
     }
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -59,10 +53,7 @@ exports.createInvoice = async (req, res, next) => {
     await invalidateCache(`invoices_customer_${invoice.CustomerId}`)
     res.status(201).json({ message: 'Invoice created successfully', invoice})
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -72,21 +63,16 @@ exports.updateInvoice = async (req, res, next) => {
   try {
     const mutable_invoice_items = req.body.InvoiceItems
     let invoice = await Invoice.findByPk(req.params.id, { include: InvoiceItem })
-    Object.keys(req.body).forEach((key) => invoice[key] = req.body[key])
-    invoice = await invoice.save()
-    
+
     if (mutable_invoice_items) await updateOrCreateChildItems(InvoiceItem, invoice.InvoiceItems, mutable_invoice_items)
-    invoice = await invoice.reload()
-    invoice = await invoice.save()
-    invoice = await Invoice.findByPk(invoice.id, { include: InvoiceItem })
+    Object.keys(req.body).forEach((key) => invoice[key] = req.body[key])
+    const updateInvoice = await invoice.save()
+    
     // Invalidate the cache every time we change something so that the front is always up to date
     await invalidateCache(`invoices_customer_${invoice.CustomerId}`)
-    res.status(201).json({ message: 'Invoice updated successfully', invoice })
+    res.status(201).json({ message: 'Invoice updated successfully', updateInvoice })
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
@@ -96,26 +82,19 @@ exports.sendInvoice = async (req, res, next) => {
     const message = await sendInvoice(customer.email)
     res.status(200).json({ message: message })
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }
 
 exports.deleteInvoice = async (req, res, next) => {
-  const id = req.params.id
   try {
-    const invoice = await Invoice.findByPk(id)
+    const invoice = await Invoice.findByPk(req.params.id)
     if (!invoice) return notFound(next, 'Invoice')
     await invoice.destroy()
     // Invalidate the cache every time we change something so that the front is always up to date
     await invalidateCache(`invoices_customer_${invoice.CustomerId}`)
     res.status(200).json({message: 'Invoice successfully destroyed'})
   } catch (error) {
-    if (!error.statusCode) {
-      error.statusCode = 500
-    }
-    next(error)
+    return next(error)
   }
 }

@@ -24,7 +24,7 @@ exports.setFilters = function (queryParams, filteredModel) {
         { lastName: {[Op.iLike]: `%${queryParams[key]}%`} }
       ]})
     } 
-    else if (Number.isInteger(+queryParams[key])) {
+    else if (queryParams[key] && Number.isInteger(+queryParams[key])) {
       options.where.push({[key]: {[Op.eq]: +queryParams[key]}})
     }
     else {
